@@ -1,5 +1,5 @@
 ﻿using PetHelp.Dtos.Base;
-using System.ComponentModel.DataAnnotations;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace PetHelp.Dtos
 {
@@ -11,8 +11,13 @@ namespace PetHelp.Dtos
         public string Email { get; set; }
         public bool Notification { get; set; }
         public string Address { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<AnimalDto> Animals { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<AdoptionDto> Adoptions { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<ClientAnimalDto> ClientAnimals { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public IEnumerable<ScheduleDto> Schedules { get; set; }
     }
 }

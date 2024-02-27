@@ -1,26 +1,49 @@
-﻿namespace PetHelp.Services.Notificator
+﻿using Microsoft.AspNetCore.Mvc.ModelBinding;
+
+namespace PetHelp.Services.Notificator
 {
     public class NotificatorService : INotificatorService
     {
-        private Dictionary<string, string[]> _notifications;
+        private readonly Dictionary<string, string> _notifications;
+
         public NotificatorService()
         {
-            _notifications = new Dictionary<string, string[]>();
+            _notifications = new Dictionary<string, string>();
         }
 
-        public void Notify(string attribute, params string[] message)
+        // Method to add a notification with a specific key and message
+        public void Notify(string key, string message)
         {
-            _notifications.Add(attribute, message);
+            _notifications[key] = message;
         }
 
+        // Method to add notifications from a ModelStateDictionary
+        public void Notify(ModelStateDictionary modelState)
+        {
+            foreach (var entry in modelState)
+            {
+                foreach (var error in entry.Value.Errors)
+                {
+                    Notify(entry.Key, error.ErrorMessage);
+                }
+            }
+        }
+
+        // Method to check if there are any notifications
         public bool HasNotifications()
         {
-            return _notifications.Count > 0;
+            return _notifications.Any();
         }
 
-        public Dictionary<string, string[]> GetNotification()
+        // Method to get the notifications as a ModelStateDictionary
+        public ModelStateDictionary GetNotifications()
         {
-            return _notifications;
+            var modelState = new ModelStateDictionary();
+            foreach (var notification in _notifications)
+            {
+                modelState.AddModelError(notification.Key, notification.Value);
+            }
+            return modelState;
         }
     }
 }

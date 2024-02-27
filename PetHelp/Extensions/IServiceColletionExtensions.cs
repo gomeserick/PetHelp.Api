@@ -3,13 +3,9 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
 using PetHelp.Dtos;
-using PetHelp.Dtos.Base;
 using PetHelp.Filters;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
-using PetHelp.Services.Reflection;
-using PetHelp.Services.verificator;
-using System.ComponentModel.Design;
 
 namespace PetHelp.Extensions
 {
@@ -21,17 +17,12 @@ namespace PetHelp.Extensions
             ConfigureOdata(services);
             ConfigureDbContext(services, config);
             ConfigureMapper(services);
-            ConfigureDependencies(services);
+            ConfigureServices(services);
         }
-        private static void ConfigureDependencies(IServiceCollection builder)
+
+        private static void ConfigureServices(IServiceCollection services)
         {
-            builder.AddScoped<ODataVerificator<AdoptionDto>, ODataVerificator<AdoptionDto>>();
-            builder.AddScoped<ODataVerificator<AnimalDto>, ODataVerificator<AnimalDto>>();
-            builder.AddScoped<ODataVerificator<ClientDto>, ODataVerificator<ClientDto>>();
-            builder.AddScoped<ODataVerificator<ClinicDto>, ODataVerificator<ClinicDto>>();
-            builder.AddScoped<ODataVerificator<EmployeeDto>, ODataVerificator<EmployeeDto>>();
-            builder.AddScoped<INotificatorService, NotificatorService>();
-            builder.AddScoped<IODataReflectionService, ODataReflectionService>();
+            services.AddScoped<INotificatorService, NotificatorService>();
         }
 
         private static void ConfigureMapper(IServiceCollection builder)
@@ -43,6 +34,7 @@ namespace PetHelp.Extensions
         {
             services.AddSwaggerGen(c =>
             {
+                c.EnableAnnotations();
                 c.SwaggerDoc("v1", new OpenApiInfo
                 {
                     Title = "Your API",
@@ -61,17 +53,22 @@ namespace PetHelp.Extensions
             builder.EntitySet<ClinicDto>("Clinic");
             builder.EntitySet<EmployeeDto>("Employee");
 
-            services.AddControllers(e => e.Filters.Add(new ExceptionFilter()))
-                .AddOData(options => {
-                    options.AddRouteComponents("odata", builder.GetEdmModel())
-                        .Select()
-                        .Filter()
-                        .OrderBy()
-                        .SetMaxTop(20)
-                        .Count()
-                        .Expand()
-                        .EnableQueryFeatures();
-                });
+            services.AddControllers(e =>
+            {
+                e.Filters.Add<ExceptionFilter>();
+                e.Filters.Add<ValidationFilter>();
+                e.Filters.Add<DatabaseFilter>();
+            }).AddOData(options =>
+            {
+                options.AddRouteComponents("odata", builder.GetEdmModel())
+                    .Select()
+                    .Filter()
+                    .OrderBy()
+                    .SetMaxTop(20)
+                    .Count()
+                    .Expand()
+                    .EnableQueryFeatures();
+            });
         }
 
         private static void ConfigureDbContext(IServiceCollection services, ConfigurationManager config)

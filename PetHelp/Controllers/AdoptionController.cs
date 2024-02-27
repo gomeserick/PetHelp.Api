@@ -40,14 +40,14 @@ namespace PetHelp.Controllers
             if (!clientExists)
             {
                 _notificatorService.Notify("Cliente", "Não foi possivel encontrar o cliente da adoção");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotifications()));
             }
 
             var employeeExists = await  _dbContext.Employees.Where(e => e.Id == adoption.EmployeeId).AnyAsync();
             if (!employeeExists)
             {
                 _notificatorService.Notify("Funcionário", "Não foi possivel encontrar o funcionário da adoção");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotifications()));
             }
 
             _dbContext.Add(adoption);
@@ -61,21 +61,21 @@ namespace PetHelp.Controllers
             if (result == null)
             {
                 _notificatorService.Notify("Funcionário", "Não foi possivel encontrar a adoção");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotifications()));
             }
 
             var clientExists = await _dbContext.Clients.Where(e => e.Id == adoption.ClientId).AnyAsync();
             if (!clientExists)
             {
                 _notificatorService.Notify("Cliente", "Não foi possivel encontrar o cliente da adoção");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotifications()));
             }
 
             var employeeExists = await _dbContext.Employees.Where(e => e.Id == adoption.EmployeeId).AnyAsync();
             if (!employeeExists)
             {
-                _notificatorService.Notify("Cliente", "Não foi possivel encontrar o cliente da adoção");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                _notificatorService.Notify("Cliente", "Não foi possivel encontrar o funcionário da adoção");
+                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotifications()));
             }
 
             _dbContext.Entry(result).CurrentValues.SetValues(adoption);
@@ -84,18 +84,19 @@ namespace PetHelp.Controllers
         }
         public async Task<ActionResult> Delete([FromQuery] int key)
         {
-            var result = await _dbContext.Adoptions.FirstOrDefaultAsync(e => e.Id == key);
+            var result = await _dbContext.Adoptions
+                .Include(e => e.Animals)
+                .FirstOrDefaultAsync(e => e.Id == key);
 
             if(result == null)
             {
                 return NoContent();
             }
 
-            var clientAnimalExists = await _dbContext.ClientAnimals.AnyAsync(e => e.AdoptionId == key);
-            if (!clientAnimalExists)
+            if (result.Animals.Any())
             {
-                _notificatorService.Notify("ClientAnimal", "Não é possivel deletar uma adoção já realizada");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                _notificatorService.Notify("aNIMAL", "Não é possivel deletar uma adoção já realizada");
+                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotifications()));
             }
 
             _dbContext.Remove(result);

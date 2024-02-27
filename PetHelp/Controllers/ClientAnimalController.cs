@@ -1,6 +1,4 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OData.Query;
-using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using PetHelp.Dtos;
 using PetHelp.Services.Database;
@@ -10,55 +8,48 @@ namespace PetHelp.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class ClientAnimalController: ControllerBase
+    public class ClientAnimalController(DatabaseContext dbContext, INotificatorService notificatorService) : ControllerBase
     {
-
-        private readonly DatabaseContext _dbContext;
-        private readonly INotificatorService _notificatorService;
-        public ClientAnimalController(DatabaseContext dbContext, INotificatorService notificator)
-        {
-            _dbContext = dbContext;
-            _notificatorService = notificator;
-        }
-
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            return Ok(await _dbContext.ClientAnimals.ToListAsync());
+            return Ok(await dbContext.ClientAnimals.ToListAsync());
         }
 
+        [HttpPost]
         public async Task<IActionResult> Post([FromBody] ClientAnimalDto ClientAnimal)
         {
-            var relationShipExists = await _dbContext.ClientAnimals
+            var relationShipExists = await dbContext.ClientAnimals
                 .Where(e => e.AdoptionId == ClientAnimal.AdoptionId &&
                             e.ClientId == ClientAnimal.ClientId &&
                             e.AnimalId == ClientAnimal.AnimalId)
                 .AnyAsync();
             if (relationShipExists)
             {
-                _notificatorService.Notify("ClientAnimal", "Já existe um cadastro com este CPF");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                notificatorService.Notify("ClientAnimal", "Já existe um cadastro com este CPF");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            _dbContext.Add(ClientAnimal);
+            dbContext.Add(ClientAnimal);
 
             return Created("", ClientAnimal);
         }
 
+        [HttpDelete]
         public async Task<IActionResult> Delete([FromQuery] ClientAnimalDto ClientAnimal)
         {
-            var CPFExists = await _dbContext.ClientAnimals
+            var CPFExists = await dbContext.ClientAnimals
                 .Where(e => e.AdoptionId == ClientAnimal.AdoptionId &&
                             e.ClientId == ClientAnimal.ClientId &&
                             e.AnimalId == ClientAnimal.AnimalId)
                 .AnyAsync();
             if (CPFExists)
             {
-                _notificatorService.Notify("ClientAnimal", "Já existe um cadastro com este CPF");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                notificatorService.Notify("ClientAnimal", "Já existe um cadastro com este CPF");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            _dbContext.Remove(ClientAnimal);
+            dbContext.Remove(ClientAnimal);
 
             return NoContent();
         }

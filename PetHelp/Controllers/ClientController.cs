@@ -2,35 +2,29 @@
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Internal;
 using PetHelp.Dtos;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    public class ClientController : ODataController
+    public class ClientController(DatabaseContext dbContext, INotificatorService notificatorService) : ODataController
     {
-        private readonly DatabaseContext _dbContext;
-        private readonly INotificatorService _notificatorService;
-        public ClientController(DatabaseContext dbContext, INotificatorService notificator)
-        {
-            _dbContext = dbContext;
-            _notificatorService = notificator;
-        }
-
         [EnableQuery]
         public IActionResult Get()
         {
-            return Ok(_dbContext.Clients);
+            return Ok(dbContext.Clients);
         }
 
         public async Task<IActionResult> Get(int key)
         {
-            var result = await _dbContext.Clients.Where(e => e.Id == key).ToListAsync();
+            var result = await dbContext.Clients.Where(e => e.Id == key).ToListAsync();
 
             if (result == null)
             {
-                return NotFound();
+                notificatorService.Notify("Cliente", "Não foi possível encontrar o cliente");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
             return Ok(result);
@@ -38,68 +32,78 @@ namespace PetHelp.Controllers
 
         public async Task<IActionResult> Post([FromBody] ClientDto Client)
         {
-            var CPFExists = await _dbContext.Clients.Where(e => e.CPF == Client.CPF).AnyAsync();
+            var CPFExists = await dbContext.Clients.Where(e => e.CPF == Client.CPF).AnyAsync();
             if (CPFExists)
             {
-                _notificatorService.Notify("Cliente", "Já existe um cadastro com este CPF");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                notificatorService.Notify("Cliente", "Já existe um cadastro com este CPF");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
-            var RGExists = await _dbContext.Clients.Where(e => e.RG == Client.RG).AnyAsync();
+            var RGExists = await dbContext.Clients.Where(e => e.RG == Client.RG).AnyAsync();
             if (RGExists)
             {
-                _notificatorService.Notify("Cliente", "Já existe um cadastro com este RG");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                notificatorService.Notify("Cliente", "Já existe um cadastro com este RG");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            _dbContext.Add(Client);
+            dbContext.Add(Client);
 
             return Created(Client);
         }
 
         public async Task<IActionResult> Put(int key, [FromBody] ClientDto Client)
         {
-            var result = _dbContext.Clients.FirstOrDefaultAsync(e => e.Id == key);
+            var result = dbContext.Clients.FirstOrDefaultAsync(e => e.Id == key);
 
             if (result == null)
             {
-                _notificatorService.Notify("Client", "Não foi possivel encontrar o Client");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                notificatorService.Notify("Client", "Não foi possivel encontrar o Cliente");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            var CPFExists = await _dbContext.Clients.Where(e => e.CPF == Client.CPF).AnyAsync();
+            var CPFExists = await dbContext.Clients.Where(e => e.CPF == Client.CPF && e.Id != key).AnyAsync();
             if (CPFExists)
             {
-                _notificatorService.Notify("Cliente", "Já existe um cadastro com este CPF");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
-            }
-            var RGExists = await _dbContext.Clients.Where(e => e.RG == Client.RG).AnyAsync();
-            if (RGExists)
-            {
-                _notificatorService.Notify("Cliente", "Já existe um cadastro com este RG");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                notificatorService.Notify("Cliente", "Já existe um cadastro com este CPF");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            _dbContext.Entry(result).CurrentValues.SetValues(Client);
+            var RGExists = await dbContext.Clients.Where(e => e.RG == Client.RG && e.Id != key).AnyAsync();
+            if (RGExists)
+            {
+                notificatorService.Notify("Cliente", "Já existe um cadastro com este RG");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
+            }
+
+            dbContext.Entry(result).CurrentValues.SetValues(Client);
 
             return Created(Client);
         }
         public async Task<IActionResult> Delete([FromQuery] int key)
         {
-            var result = await _dbContext.Clients.FirstOrDefaultAsync(e => e.Id == key);
+            var result = await dbContext.Clients
+                .Include(e => e.Animals)
+                .Include(e => e.Adoptions)
+                .FirstOrDefaultAsync(e => e.Id == key);
 
             if (result == null)
             {
-                return NoContent();
+                notificatorService.Notify("Client", "Não foi possivel encontrar o Cliente");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            var clientClientExists = await _dbContext.Adoptions.AnyAsync(e => e.ClientId == key);
-            if (!clientClientExists)
+            if (result.Animals.Any())
             {
-                _notificatorService.Notify("ClientClient", "Não é possivel deletar um cliente");
-                return ValidationProblem(new ValidationProblemDetails(_notificatorService.GetNotification()));
+                notificatorService.Notify("Animal", "Não é possivel deletar um cliente que já adotou um animal");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            _dbContext.Remove(result);
+            if (result.Adoptions.Any())
+            {
+                notificatorService.Notify("Adoption", "Não é possivel deletar um cliente que já adotou um animal");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
+            }
+
+            dbContext.Remove(result);
 
             return Ok(result);
         }

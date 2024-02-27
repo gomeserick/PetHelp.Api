@@ -1,5 +1,5 @@
 ﻿using PetHelp.Dtos.Base;
-using System.Reflection.Metadata;
+using Swashbuckle.AspNetCore.Annotations;
 
 namespace PetHelp.Dtos
 {
@@ -8,6 +8,9 @@ namespace PetHelp.Dtos
         public string Name { get; set; }
         public string RG { get; set; }
         public string Image { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<AdoptionDto> Adoption { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public IEnumerable<ScheduleDto> Schedules { get; set; }
     }
 }

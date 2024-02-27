@@ -1,6 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetHelp.Dtos;
-using System.Reflection.Emit;
 
 namespace PetHelp.Services.Database
 {
@@ -24,61 +23,13 @@ namespace PetHelp.Services.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-
+            optionsBuilder.LogTo(Console.WriteLine);
         }
 
 
         protected override void OnModelCreating(ModelBuilder model)
         {
-            model.Entity<ClientAnimalDto>()
-                .HasOne(e => e.Client)
-                .WithMany(e => e.ClientAnimals)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            model.Entity<ClientAnimalDto>()
-                .HasOne(e => e.Animal)
-                .WithMany(e => e.ClientAnimals)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            model.Entity<ClientAnimalDto>()
-                .HasOne(e => e.Adoption)
-                .WithMany(e => e.ClientAnimals)
-                .OnDelete(DeleteBehavior.NoAction);
-
-            model.Entity<AnimalDto>()
-                .HasMany(e => e.Clients)
-                .WithMany(e => e.Animals)
-                .UsingEntity<ClientAnimalDto>();
-
-            model.Entity<ClientDto>()
-                .HasMany(e => e.Animals)
-                .WithMany(e => e.Clients)
-                .UsingEntity<ClientAnimalDto>();
-
-            model.Entity<AdoptionDto>()
-                .HasMany(e => e.Animals)
-                .WithMany(e => e.Adoptions)
-                .UsingEntity<ClientAnimalDto>();
-
-            model.Entity<AdoptionDto>()
-                .HasOne(e => e.Client)
-                .WithMany(e => e.Adoptions)
-                .HasForeignKey(e => e.ClientId);
-
-            model.Entity<AdoptionDto>()
-                .HasOne(e => e.Employee)
-                .WithMany(e => e.Adoption)
-                .HasForeignKey(e => e.EmployeeId);
-
-            model.Entity<AdoptionDto>()
-                .HasOne(e => e.Employee)
-                .WithMany(e => e.Adoption)
-                .HasForeignKey(e => e.EmployeeId);
-
-            model.Entity<ClinicDto>()
-                .HasMany(e => e.Animals)
-                .WithOne(e => e.Clinic)
-                .HasForeignKey(e => e.ClinicId);
+            model.ApplyConfigurationsFromAssembly(typeof(DatabaseContext).Assembly);
 
             base.OnModelCreating(model);
         }
