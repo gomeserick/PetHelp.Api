@@ -52,6 +52,8 @@ namespace PetHelp.Extensions
             builder.EntitySet<ClientDto>("Client");
             builder.EntitySet<ClinicDto>("Clinic");
             builder.EntitySet<EmployeeDto>("Employee");
+            builder.EntitySet<MessageDto>("Message");
+            builder.EntitySet<ScheduleDto>("Schedule");
 
             services.AddControllers(e =>
             {

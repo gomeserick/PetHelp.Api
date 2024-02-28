@@ -19,5 +19,7 @@ namespace PetHelp.Dtos
         public IEnumerable<ClientAnimalDto> ClientAnimals { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<ScheduleDto> Schedules { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public IEnumerable<MessageDto> Messages { get; set; }
     }
 }

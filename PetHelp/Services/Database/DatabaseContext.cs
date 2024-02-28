@@ -11,6 +11,8 @@ namespace PetHelp.Services.Database
         public DbSet<ClientDto> Clients { get; set; }
         public DbSet<ClinicDto> Clinics { get; set; }
         public DbSet<EmployeeDto> Employees { get; set; }
+        public DbSet<MessageDto> Messages { get; set; }
+        public DbSet<ScheduleDto> Schedules { get; set; }
         public DatabaseContext()
         {
 

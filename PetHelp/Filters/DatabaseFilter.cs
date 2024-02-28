@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc.Filters;
+﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
@@ -17,7 +18,10 @@ namespace PetHelp.Filters
 #pragma warning restore CS1998
         {
             if (notificator.HasNotifications())
+            {
+                await next();
                 return;
+            }
 
             await dbContext.SaveChangesAsync();
 

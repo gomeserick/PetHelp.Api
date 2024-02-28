@@ -33,7 +33,7 @@ namespace PetHelp.Controllers
         public async Task<IActionResult> Post([FromBody] AnimalDto animal)
         {
             var AnimalExists = await dbContext.Animals.Where(e => e.Id == animal.ClinicId).AnyAsync();
-            if (!AnimalExists)
+            if (AnimalExists)
             {
                 notificatorService.Notify("Animal", "Não foi possivel encontrar o animal");
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
