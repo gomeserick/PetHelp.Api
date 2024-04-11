@@ -24,6 +24,13 @@ namespace PetHelp.Services.Database.Configuration
             builder
                 .HasMany(e => e.ClientAnimals)
                 .WithOne(e => e.Adoption)
+                .HasForeignKey(e => e.AdoptionId)
+                .OnDelete(DeleteBehavior.NoAction);
+
+            builder
+                .HasOne(e => e.Employee)
+                .WithMany(e => e.Adoption)
+                .HasForeignKey(e => e.EmployeeId)
                 .OnDelete(DeleteBehavior.NoAction);
         }
     }

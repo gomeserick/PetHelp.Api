@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
@@ -8,6 +9,7 @@ using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
+    [Authorize("api")]
     public class AnimalController(DatabaseContext dbContext, INotificatorService notificatorService) : ODataController
     {
 
@@ -33,7 +35,7 @@ namespace PetHelp.Controllers
         public async Task<IActionResult> Post([FromBody] AnimalDto animal)
         {
             var AnimalExists = await dbContext.Animals.Where(e => e.Id == animal.ClinicId).AnyAsync();
-            if (AnimalExists)
+            if (!AnimalExists)
             {
                 notificatorService.Notify("Animal", "Não foi possivel encontrar o animal");
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));

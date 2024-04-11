@@ -10,8 +10,6 @@ namespace PetHelp.Services.Database.Configuration
         {
             builder.ToTable("Clients");
 
-            builder.HasKey(e => e.Id);
-
             builder.HasIndex(e => e.CPF).IsUnique();
 
             builder.Property(e => e.Id)
@@ -29,6 +27,11 @@ namespace PetHelp.Services.Database.Configuration
             builder.Property(e => e.Notification);
 
             builder.Property(e => e.Address);
+
+            builder.HasOne(e => e.User)
+                .WithOne(e => e.Client)
+                .HasForeignKey<ClientDto>(e => e.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

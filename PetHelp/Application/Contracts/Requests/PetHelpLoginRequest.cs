@@ -1,9 +1,9 @@
 ﻿namespace PetHelp.Application.Contracts.Requests
 {
-    public class LoginRequest
+    public class PetHelpLoginRequest
     {
         public string Email { get; set; }
         public string Password { get; set; }
-
+        public bool RememberMe { get; set; }
     }
 }

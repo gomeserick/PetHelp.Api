@@ -19,11 +19,13 @@ namespace PetHelp.Services.Database.Configuration
 
             builder.HasOne(x => x.Client)
                 .WithMany(x => x.Messages)
-                .HasForeignKey(x => x.UserId);
+                .HasForeignKey(x => x.UserId)
+                .OnDelete(DeleteBehavior.NoAction);
 
             builder.HasOne(x => x.Employee)
                 .WithMany(x => x.Messages)
-                .HasForeignKey(x => x.EmployeeId);
+                .HasForeignKey(x => x.EmployeeId)
+                .OnDelete(DeleteBehavior.NoAction);
         }
     }
 }

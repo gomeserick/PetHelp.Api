@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PetHelp.Dtos.Identity;
 using PetHelp.Services.Database;
 
 namespace PetHelp.Extensions
@@ -9,7 +10,8 @@ namespace PetHelp.Extensions
         {
             ConfigureCors(app);
             ConfigureSwaggerUI(app);
-            configureDatabase(app);
+            ConfigureDatabase(app);
+            UseAuthentication(app);
         }
 
         private static void ConfigureCors(WebApplication app)
@@ -22,6 +24,13 @@ namespace PetHelp.Extensions
             });
         }
 
+        private static void UseAuthentication(WebApplication app)
+        {
+            app.MapIdentityApi<IdentityBaseDto>();
+            app.UseAuthentication();
+            app.UseAuthorization();
+        }
+
         private static void ConfigureSwaggerUI(IApplicationBuilder app)
         {
             app.UseSwagger();
@@ -32,7 +41,7 @@ namespace PetHelp.Extensions
             });
         }
 
-        private static void configureDatabase(IApplicationBuilder app)
+        private static void ConfigureDatabase(IApplicationBuilder app)
         {
             using (var scope = app.ApplicationServices.CreateScope())
             {

@@ -1,11 +1,16 @@
-﻿using Microsoft.AspNetCore.OData;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
 using PetHelp.Dtos;
+using PetHelp.Dtos.Identity;
 using PetHelp.Filters;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
+using System.Runtime.Intrinsics.X86;
 
 namespace PetHelp.Extensions
 {
@@ -13,11 +18,28 @@ namespace PetHelp.Extensions
     {
         public static void ConfigureServices(this IServiceCollection services, ConfigurationManager config)
         {
+            ConfigureDbContext(services, config);
             ConfigureSwagger(services);
             ConfigureOdata(services);
-            ConfigureDbContext(services, config);
             ConfigureMapper(services);
             ConfigureServices(services);
+            ConfigureAuthentication(services);
+        }
+
+        private static void ConfigureAuthentication(IServiceCollection services)
+        {
+            services.AddAuthorization();
+
+            services.AddAuthentication()
+                .AddBearerToken(IdentityConstants.BearerScheme);
+
+            services.AddAuthorizationBuilder()
+                .AddPolicy("api", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+                    p.
+                });
         }
 
         private static void ConfigureServices(IServiceCollection services)
@@ -40,6 +62,25 @@ namespace PetHelp.Extensions
                     Title = "Your API",
                     Version = "v1",
                     Description = "Your API Description",
+                });
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                {
+                    Scheme = "Bearer",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.Http,
+                    OpenIdConnectUrl = new Uri("https://localhost:7222/.well-known/openid-configuration"),
+                    Name = "Authorization",
+                    Flows = new OpenApiOAuthFlows()
+                    {
+                        Implicit = new OpenApiOAuthFlow()
+                        {
+                            AuthorizationUrl = new Uri("https://localhost:7222/connect/authorize"),
+                            Scopes = new Dictionary<string, string>
+                            {
+                                { "api1", "Your API" }
+                            }
+                        }
+                    }
                 });
             });
         }
@@ -81,8 +122,29 @@ namespace PetHelp.Extensions
             .Build();
 
             services.AddDbContext<DatabaseContext>(options =>
-                options.UseSqlServer(config["ConnectionString"]));
-            var debug = config["ConnectionString"];
+            {
+                options.UseSqlServer(config.GetConnectionString("DefaultConnection"));
+            });
+
+
+            services.AddDefaultIdentity<IdentityBaseDto>(options =>
+            {
+                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireUppercase = false;
+                options.Password.RequireDigit = true;
+                options.Password.RequiredLength = 8;
+                options.Password.RequireLowercase = true;
+                options.Password.RequiredUniqueChars = 1;
+
+                options.User.RequireUniqueEmail = true;
+                options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";
+
+                options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(0);
+                options.Lockout.MaxFailedAccessAttempts = 500;
+
+                options.SignIn.RequireConfirmedEmail = false;
+            }).AddEntityFrameworkStores<DatabaseContext>()
+            .AddApiEndpoints();
         }
     }
 }
