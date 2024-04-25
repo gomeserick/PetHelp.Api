@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetHelp.Dtos.Identity;
 using PetHelp.Services.Database;
+using PetHelp.Services.Seeders.Interfaces;
 
 namespace PetHelp.Extensions
 {
@@ -41,12 +42,13 @@ namespace PetHelp.Extensions
             });
         }
 
-        private static void ConfigureDatabase(IApplicationBuilder app)
+        private static async void ConfigureDatabase(IApplicationBuilder app)
         {
             using (var scope = app.ApplicationServices.CreateScope())
             {
-                var db = scope.ServiceProvider.GetRequiredService<DatabaseContext>();
-                db.Database.Migrate();
+                await scope.ServiceProvider.GetRequiredService<DatabaseContext>().Database.MigrateAsync();
+                await scope.ServiceProvider.GetKeyedService<ISeeder>("RoleSeeding").Seed();
+                await scope.ServiceProvider.GetKeyedService<ISeeder>("UserSeeding").Seed();
             }
         }
     }

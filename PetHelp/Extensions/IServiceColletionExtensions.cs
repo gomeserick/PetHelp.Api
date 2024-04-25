@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
 using PetHelp.Dtos;
@@ -10,6 +11,8 @@ using PetHelp.Dtos.Identity;
 using PetHelp.Filters;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
+using PetHelp.Services.Seeders;
+using PetHelp.Services.Seeders.Interfaces;
 using System.Runtime.Intrinsics.X86;
 
 namespace PetHelp.Extensions
@@ -24,6 +27,13 @@ namespace PetHelp.Extensions
             ConfigureMapper(services);
             ConfigureServices(services);
             ConfigureAuthentication(services);
+            ConfigureSeeders(services);
+        }
+
+        private static void ConfigureSeeders(IServiceCollection services)
+        {
+            services.AddKeyedScoped<ISeeder, UserSeeder>("UserSeeding");
+            services.AddKeyedScoped<ISeeder, RoleSeedingService>("RoleSeeding");
         }
 
         private static void ConfigureAuthentication(IServiceCollection services)
@@ -34,11 +44,22 @@ namespace PetHelp.Extensions
                 .AddBearerToken(IdentityConstants.BearerScheme);
 
             services.AddAuthorizationBuilder()
-                .AddPolicy("api", p =>
+                .AddPolicy("Full", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireRole("employee");
+                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+                })
+                .AddPolicy("Default", p =>
                 {
                     p.RequireAuthenticatedUser();
                     p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
-                    p.
+                })
+                .AddPolicy("EndUser", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireRole("client");
+                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
                 });
         }
 
@@ -49,7 +70,7 @@ namespace PetHelp.Extensions
 
         private static void ConfigureMapper(IServiceCollection builder)
         {
-            builder.AddAutoMapper(typeof(IServiceColletionExtensions));
+            builder.AddAutoMapper(typeof(IServiceColletionExtensions).Assembly);
         }
 
         private static void ConfigureSwagger(IServiceCollection services)
@@ -63,23 +84,28 @@ namespace PetHelp.Extensions
                     Version = "v1",
                     Description = "Your API Description",
                 });
-                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme()
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
-                    Scheme = "Bearer",
-                    In = ParameterLocation.Header,
-                    Type = SecuritySchemeType.Http,
-                    OpenIdConnectUrl = new Uri("https://localhost:7222/.well-known/openid-configuration"),
+                    Description = @"JWT Authorization header using the Bearer scheme. \r\n\r\n 
+                      Enter 'Bearer' [space] and then your token in the text input below.
+                      \r\n\r\nExample: 'Bearer 12345abcdef'",
                     Name = "Authorization",
-                    Flows = new OpenApiOAuthFlows()
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "bearer"
+                });
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement()
+                {
                     {
-                        Implicit = new OpenApiOAuthFlow()
+                        new OpenApiSecurityScheme
                         {
-                            AuthorizationUrl = new Uri("https://localhost:7222/connect/authorize"),
-                            Scopes = new Dictionary<string, string>
+                            Reference = new OpenApiReference
                             {
-                                { "api1", "Your API" }
+                                Id = "Bearer",
+                                Type = ReferenceType.SecurityScheme
                             }
-                        }
+                        },
+                        new List<string>()
                     }
                 });
             });
@@ -133,7 +159,7 @@ namespace PetHelp.Extensions
                 options.Password.RequireUppercase = false;
                 options.Password.RequireDigit = true;
                 options.Password.RequiredLength = 8;
-                options.Password.RequireLowercase = true;
+                options.Password.RequireLowercase = false; // true;
                 options.Password.RequiredUniqueChars = 1;
 
                 options.User.RequireUniqueEmail = true;
@@ -143,7 +169,9 @@ namespace PetHelp.Extensions
                 options.Lockout.MaxFailedAccessAttempts = 500;
 
                 options.SignIn.RequireConfirmedEmail = false;
-            }).AddEntityFrameworkStores<DatabaseContext>()
+            })
+                .AddRoles<IdentityRole<int>>()
+                .AddEntityFrameworkStores<DatabaseContext>()
             .AddApiEndpoints();
         }
     }
