@@ -28,21 +28,8 @@ namespace PetHelp.Controllers
             user.Employee = await context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
             user.Client = await context.Clients.FirstOrDefaultAsync(e => e.UserId == user.Id);
             var userResponse = mapper.Map<UserInfoResponse>(user);
-            userResponse = mapper.Map(user, userResponse);
             userResponse.Roles = claims;
             return Ok(userResponse);
         }
-
-        //public async Task<IActionResult> Get(int key)
-        //{
-        //    var result = await context.Users.Where(e => e.Id == key).ToListAsync();
-
-        //    if (result == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return Ok(result);
-        //}
     }
 }

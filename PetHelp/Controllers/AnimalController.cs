@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
+using PetHelp.Application.Contracts.Enums;
 using PetHelp.Dtos;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
@@ -32,6 +33,8 @@ namespace PetHelp.Controllers
             return Ok(result);
         }
 
+        [Authorize(PetHelpRoles.Admin)]
+        [Authorize(PetHelpRoles.Employee)]
         public async Task<IActionResult> Post([FromBody] AnimalDto animal)
         {
             var AnimalExists = await dbContext.Animals.Where(e => e.Id == animal.ClinicId).AnyAsync();

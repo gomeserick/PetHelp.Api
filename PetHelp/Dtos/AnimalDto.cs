@@ -7,6 +7,7 @@ namespace PetHelp.Dtos
     public class AnimalDto : BaseDto
     {
         public string Species { get; set; }
+        public string Breed { get; set; }
         public string Color { get; set; }
         public string Gender { get; set; }
         public string Temperament { get; set; }

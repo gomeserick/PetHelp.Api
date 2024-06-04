@@ -10,19 +10,6 @@ namespace PetHelp.Services.Database.Configuration
         {
             builder.ToTable("Employees");
 
-            builder.HasIndex(e => e.RG).IsUnique();
-
-            builder.Property(e => e.Id)
-                .ValueGeneratedOnAdd();
-
-            builder.Property(e => e.Name)
-                .IsRequired();
-
-            builder.Property(e => e.RG)
-                .IsRequired();
-
-            builder.Property(e => e.Image);
-
             builder.HasOne(e => e.User)
                 .WithOne(e => e.Employee)
                 .HasForeignKey<EmployeeDto>(e => e.UserId)

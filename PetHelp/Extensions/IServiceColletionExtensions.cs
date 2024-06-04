@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
+using PetHelp.Application.Contracts.Enums;
 using PetHelp.Dtos;
 using PetHelp.Dtos.Identity;
 using PetHelp.Filters;
@@ -47,7 +48,7 @@ namespace PetHelp.Extensions
                 .AddPolicy("Full", p =>
                 {
                     p.RequireAuthenticatedUser();
-                    p.RequireRole("employee");
+                    p.RequireRole(PetHelpRoles.Employee);
                     p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
                 })
                 .AddPolicy("Default", p =>
@@ -58,7 +59,13 @@ namespace PetHelp.Extensions
                 .AddPolicy("EndUser", p =>
                 {
                     p.RequireAuthenticatedUser();
-                    p.RequireRole("client");
+                    p.RequireRole(PetHelpRoles.Client);
+                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+                })
+                .AddDefaultPolicy("Sysadm", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireRole(PetHelpRoles.Admin);
                     p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
                 });
         }
@@ -114,13 +121,28 @@ namespace PetHelp.Extensions
         private static void ConfigureOdata(IServiceCollection services)
         {
             ODataConventionModelBuilder builder = new();
-            builder.EntitySet<AdoptionDto>("Adoption");
-            builder.EntitySet<AnimalDto>("Animal");
-            builder.EntitySet<ClientDto>("Client");
-            builder.EntitySet<ClinicDto>("Clinic");
-            builder.EntitySet<EmployeeDto>("Employee");
-            builder.EntitySet<MessageDto>("Message");
-            builder.EntitySet<ScheduleDto>("Schedule");
+            var adoption = builder.EntitySet<AdoptionDto>("Adoption");
+            adoption.EntityType.Ignore(a => a.Client);
+            adoption.EntityType.Ignore(a => a.ClientAnimals);
+            var animal = builder.EntitySet<AnimalDto>("Animal");
+            var clinic = builder.EntitySet<ClinicDto>("Clinic");
+            var client = builder.EntitySet<ClientDto>("Client");
+                client.EntityType.Ignore(c => c.User);
+            var employee = builder.EntitySet<EmployeeDto>("Employee");
+                employee.EntityType.Ignore(e => e.User);
+            var SysadmEmployee = builder.EntitySet<IdentityBaseDto>("SysAdmEmployee");
+                SysadmEmployee.EntityType.Ignore(e => e.PasswordHash);
+                SysadmEmployee.EntityType.Ignore(e => e.ConcurrencyStamp);
+                SysadmEmployee.EntityType.Ignore(e => e.AccessFailedCount);
+                SysadmEmployee.EntityType.Ignore(e => e.LockoutEnd);
+                SysadmEmployee.EntityType.Ignore(e => e.EmailConfirmed);
+                SysadmEmployee.EntityType.Ignore(e => e.SecurityStamp);
+                SysadmEmployee.EntityType.Ignore(e => e.LockoutEnabled);
+                SysadmEmployee.EntityType.Ignore(e => e.TwoFactorEnabled);
+                SysadmEmployee.EntityType.Ignore(e => e.PhoneNumberConfirmed);
+                SysadmEmployee.EntityType.Ignore(e => e.NormalizedUserName);
+                SysadmEmployee.EntityType.Ignore(e => e.NormalizedEmail);
+                SysadmEmployee.EntityType.Ignore(e => e.Client);
 
             services.AddControllers(e =>
             {

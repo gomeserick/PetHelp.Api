@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
+using PetHelp.Application.Contracts.Enums;
 using PetHelp.Dtos;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
@@ -26,6 +28,8 @@ namespace PetHelp.Controllers
 
             return Ok(result);
         }
+        [Authorize(PetHelpRoles.Employee)]
+        [Authorize(PetHelpRoles.Admin)]
         public async Task<ActionResult> Post([FromBody] AdoptionDto adoption)
         {
             var clientExists = await dbContext.Clients.Where(e => e.Id == adoption.ClientId).AnyAsync();
