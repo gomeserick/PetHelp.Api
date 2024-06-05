@@ -10,6 +10,7 @@ namespace PetHelp.Extensions
         public static void ConfigureApp(this WebApplication app)
         {
             ConfigureCors(app);
+            app.UseHttpLogging();
             ConfigureSwaggerUI(app);
             ConfigureDatabase(app);
             UseAuthentication(app);

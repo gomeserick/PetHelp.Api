@@ -10,7 +10,6 @@ using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    [Authorize("api")]
     public class AnimalController(DatabaseContext dbContext, INotificatorService notificatorService) : ODataController
     {
 

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.HttpLogging;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
@@ -82,6 +83,17 @@ namespace PetHelp.Extensions
 
         private static void ConfigureSwagger(IServiceCollection services)
         {
+            services.AddHttpLogging(o =>
+            {
+                o.LoggingFields = HttpLoggingFields.All;
+                o.RequestHeaders.Add("sec-ch-ua");
+                o.ResponseHeaders.Add("MyResponseHeader");
+                o.MediaTypeOptions.AddText("application/javascript");
+                o.RequestBodyLogLimit = 4096;
+                o.ResponseBodyLogLimit = 4096;
+                o.CombineLogs = true;
+            });
+
             services.AddSwaggerGen(c =>
             {
                 c.EnableAnnotations();

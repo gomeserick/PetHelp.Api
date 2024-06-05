@@ -19,11 +19,11 @@ namespace PetHelp.Services.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.LogTo(e => {
-                Console.ForegroundColor = ConsoleColor.Green;
-                Console.WriteLine(e);
-                Console.ForegroundColor = ConsoleColor.White;
-            });
+            //optionsBuilder.LogTo(e => {
+            //    Console.ForegroundColor = ConsoleColor.Green;
+            //    Console.WriteLine(e);
+            //    Console.ForegroundColor = ConsoleColor.White;
+            //});
         }
 
         protected override void OnModelCreating(ModelBuilder model)
