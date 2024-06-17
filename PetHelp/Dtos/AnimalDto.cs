@@ -16,9 +16,9 @@ namespace PetHelp.Dtos
         [SwaggerSchema(ReadOnly = true)]
         public ClinicDto Clinic { get; set; }
         [SwaggerSchema(ReadOnly = true)]
-        public IEnumerable<ClientDto> Clients { get; set; }
+        public ClientDto Client { get; set; }
         [SwaggerSchema(ReadOnly = true)]
-        public IEnumerable<AdoptionDto> Adoptions { get; set; }
+        public AdoptionDto Adoption { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<ClientAnimalDto> ClientAnimals { get; set; }
         [SwaggerSchema(ReadOnly = true)]
