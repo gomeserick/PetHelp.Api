@@ -6,7 +6,7 @@ using PetHelp.Services.Database;
 
 namespace PetHelp.Controllers.SysAdm
 {
-    public class SysAdmEmployeeController(DatabaseContext context): ODataController
+    public class SysAdmEmployeeController(DatabaseContext context): Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
     {
         [EnableQuery]
         public IActionResult Get()

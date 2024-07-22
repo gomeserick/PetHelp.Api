@@ -2,7 +2,7 @@
 
 namespace PetHelp.Dtos.Base
 {
-    public class BaseDto
+    public abstract class BaseDto
     {
         [Key]
         public int Id { get; set; }

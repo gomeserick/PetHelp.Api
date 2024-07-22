@@ -5,17 +5,19 @@ using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PetHelp.Dtos
 {
-    [Table("Schedule")]
-    public class ScheduleDto: PrivateDataDto
+    [Table("Vaccine")]
+    public class VaccineDto: PrivateDataDto
     {
-        public DateTime Date { get; set; }
-        public int Duration { get; set; } // in minutes
-        [ForeignKey(nameof(Employee))]
-        public int EmployeeId { get; set; }
+        public string Type { get; set; }
+        public DateTime DateTaken { get; set; }
+        public DateTime NextDate { get; set; }
+        [ForeignKey(nameof(Clinic))]
+        public int ClinicId { get; set; }
         [ForeignKey(nameof(Animal))]
         public int AnimalId { get; set; }
         [SwaggerSchema(ReadOnly = true)]
-        public EmployeeDto Employee { get; set; }
+        [DeleteBehavior(DeleteBehavior.NoAction)]
+        public ClinicDto Clinic { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public AnimalDto Animal { get; set; }
     }

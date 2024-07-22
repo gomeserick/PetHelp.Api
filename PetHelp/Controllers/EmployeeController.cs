@@ -19,13 +19,13 @@ namespace PetHelp.Controllers
         DatabaseContext dbContext,
         RoleManager<IdentityRole<int>> roleManager,
         UserManager<IdentityBaseDto> userManager,
-        INotificatorService notificatorService) : ODataController
+        INotificatorService notificatorService) : Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
     {
-        [EnableQuery]
-        public IActionResult Get()
-        {
-            return Ok(dbContext.Employees);
-        }
+        //[EnableQuery]
+        //public IActionResult Get()
+        //{
+        //    return Ok(dbContext.Employees);
+        //}
         public async Task<IActionResult> Get(int key)
         {
             var result = await dbContext.Employees.Where(e => e.Id == key).ToListAsync();

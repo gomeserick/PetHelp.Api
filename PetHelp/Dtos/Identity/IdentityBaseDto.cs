@@ -10,9 +10,10 @@ namespace PetHelp.Dtos.Identity
         public string CPF { get; set; }
         public string Address { get; set; }
         public string Image { get; set; }
+        public bool NotificationEnabled { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public EmployeeDto Employee { get; set; }
         [SwaggerSchema(ReadOnly = true)]
-        public ClientDto Client { get; set; }
+        public UserDto User { get; set; }
     }
 }

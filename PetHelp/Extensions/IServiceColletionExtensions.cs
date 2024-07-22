@@ -11,6 +11,8 @@ using PetHelp.Application.Contracts.Enums;
 using PetHelp.Dtos;
 using PetHelp.Dtos.Identity;
 using PetHelp.Filters;
+using PetHelp.Services.Context;
+using PetHelp.Services.Context.Interfaces;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
 using PetHelp.Services.Seeders;
@@ -73,6 +75,7 @@ namespace PetHelp.Extensions
 
         private static void ConfigureServices(IServiceCollection services)
         {
+            services.AddScoped<IContext, PetHelpContext>();
             services.AddScoped<INotificatorService, NotificatorService>();
         }
 
@@ -133,28 +136,22 @@ namespace PetHelp.Extensions
         private static void ConfigureOdata(IServiceCollection services)
         {
             ODataConventionModelBuilder builder = new();
-            var adoption = builder.EntitySet<AdoptionDto>("Adoption");
-            adoption.EntityType.Ignore(a => a.Client);
-            adoption.EntityType.Ignore(a => a.ClientAnimals);
-            var animal = builder.EntitySet<AnimalDto>("Animal");
-            var clinic = builder.EntitySet<ClinicDto>("Clinic");
-            var client = builder.EntitySet<ClientDto>("Client");
-                client.EntityType.Ignore(c => c.User);
-            var employee = builder.EntitySet<EmployeeDto>("Employee");
-                employee.EntityType.Ignore(e => e.User);
-            var SysadmEmployee = builder.EntitySet<IdentityBaseDto>("SysAdmEmployee");
-                SysadmEmployee.EntityType.Ignore(e => e.PasswordHash);
-                SysadmEmployee.EntityType.Ignore(e => e.ConcurrencyStamp);
-                SysadmEmployee.EntityType.Ignore(e => e.AccessFailedCount);
-                SysadmEmployee.EntityType.Ignore(e => e.LockoutEnd);
-                SysadmEmployee.EntityType.Ignore(e => e.EmailConfirmed);
-                SysadmEmployee.EntityType.Ignore(e => e.SecurityStamp);
-                SysadmEmployee.EntityType.Ignore(e => e.LockoutEnabled);
-                SysadmEmployee.EntityType.Ignore(e => e.TwoFactorEnabled);
-                SysadmEmployee.EntityType.Ignore(e => e.PhoneNumberConfirmed);
-                SysadmEmployee.EntityType.Ignore(e => e.NormalizedUserName);
-                SysadmEmployee.EntityType.Ignore(e => e.NormalizedEmail);
-                SysadmEmployee.EntityType.Ignore(e => e.Client);
+            builder.EntitySet<AnimalDto>("Animal").IgnorePrivateData();
+            builder.EntitySet<ClinicDto>("Clinic").IgnorePrivateData();
+            builder.EntitySet<IdentityBaseDto>("SysAdmEmployee")
+                .Ignoring(e => e.PasswordHash)
+                .Ignoring(e => e.PasswordHash)
+                .Ignoring(e => e.ConcurrencyStamp)
+                .Ignoring(e => e.AccessFailedCount)
+                .Ignoring(e => e.LockoutEnd)
+                .Ignoring(e => e.EmailConfirmed)
+                .Ignoring(e => e.SecurityStamp)
+                .Ignoring(e => e.LockoutEnabled)
+                .Ignoring(e => e.TwoFactorEnabled)
+                .Ignoring(e => e.PhoneNumberConfirmed)
+                .Ignoring(e => e.NormalizedUserName)
+                .Ignoring(e => e.NormalizedEmail)
+                .Ignoring(e => e.User);
 
             services.AddControllers(e =>
             {

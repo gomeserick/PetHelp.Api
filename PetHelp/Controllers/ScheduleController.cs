@@ -8,13 +8,13 @@ using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    public class ScheduleController(DatabaseContext dbContext, INotificatorService notificatorService) : ODataController
+    public class ScheduleController(DatabaseContext dbContext, INotificatorService notificatorService) : Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
     {
-        [EnableQuery]
-        public IActionResult Get()
-        {
-            return Ok(dbContext.Employees);
-        }
+        //[EnableQuery]
+        //public IActionResult Get()
+        //{
+        //    return Ok(dbContext.Employees);
+        //}
         public async Task<IActionResult> Get(int key)
         {
             var result = await dbContext.Schedules.Where(e => e.Id == key).ToListAsync();
@@ -28,7 +28,7 @@ namespace PetHelp.Controllers
         public async Task<IActionResult> Post([FromBody] ScheduleDto schedule)
         {
             var employeeExists = await dbContext.Employees.Where(e => e.Id == schedule.EmployeeId).AnyAsync();
-            var clientExists = await dbContext.Clients.Where(e => e.Id == schedule.ClientId).AnyAsync();
+            var clientExists = await dbContext.PetHelpUsers.Where(e => e.Id == schedule.UserId).AnyAsync();
             var animalExists = await dbContext.Animals.Where(e => e.Id == schedule.AnimalId).AnyAsync();
 
             if(!employeeExists)
@@ -48,7 +48,7 @@ namespace PetHelp.Controllers
                 .Where(e => e.Date <= schedule.Date.AddMinutes(e.Duration));
 
             var clientOccupied = await dateQuery
-                .Where(e => e.ClientId == schedule.ClientId)
+                .Where(e => e.UserId == schedule.UserId)
                 .AnyAsync();
 
             var employeeOccupied = await dateQuery

@@ -12,8 +12,8 @@ using PetHelp.Services.Database;
 namespace PetHelp.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20240617235624_RemovedUnnecessaryTables")]
-    partial class RemovedUnnecessaryTables
+    [Migration("20240721152712_InitialCreate")]
+    partial class InitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -24,6 +24,8 @@ namespace PetHelp.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
+
+            modelBuilder.HasSequence("PrivateDataDtoSequence");
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<int>", b =>
                 {
@@ -162,36 +164,6 @@ namespace PetHelp.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.AdoptionDto", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("Date")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("EmployeeId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Observation")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("ClientId");
-
-                    b.HasIndex("EmployeeId");
-
-                    b.ToTable("Adoptions", (string)null);
-                });
-
             modelBuilder.Entity("PetHelp.Dtos.AnimalDto", b =>
                 {
                     b.Property<int>("Id")
@@ -200,85 +172,73 @@ namespace PetHelp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("AdoptionId")
-                        .HasColumnType("int");
+                    b.Property<bool>("Alive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("Available")
+                        .HasColumnType("bit");
 
                     b.Property<string>("Breed")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("ClientId")
-                        .HasColumnType("int");
+                    b.Property<bool>("Castrated")
+                        .HasColumnType("bit");
 
                     b.Property<int>("ClinicId")
                         .HasColumnType("int");
 
                     b.Property<string>("Color")
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.Property<string>("Gender")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(10)
+                        .HasColumnType("nvarchar(10)");
 
                     b.Property<string>("Image")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Name")
+                        .HasMaxLength(75)
+                        .HasColumnType("nvarchar(75)");
+
                     b.Property<string>("Species")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<string>("Temperament")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("UserId")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("AdoptionId");
-
-                    b.HasIndex("ClientId");
-
                     b.HasIndex("ClinicId");
 
-                    b.ToTable("Animals", (string)null);
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Animal");
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.ClientAnimalDto", b =>
-                {
-                    b.Property<int>("AnimalId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("ClientId")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("AdoptionId")
-                        .IsRequired()
-                        .HasColumnType("int");
-
-                    b.HasKey("AnimalId", "ClientId");
-
-                    b.HasIndex("AdoptionId");
-
-                    b.HasIndex("ClientId");
-
-                    b.ToTable("ClientAnimals", (string)null);
-                });
-
-            modelBuilder.Entity("PetHelp.Dtos.ClientDto", b =>
+            modelBuilder.Entity("PetHelp.Dtos.Base.PrivateDataDto", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("int")
+                        .HasDefaultValueSql("NEXT VALUE FOR [PrivateDataDtoSequence]");
 
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    SqlServerPropertyBuilderExtensions.UseSequence(b.Property<int>("Id"));
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId")
-                        .IsUnique();
+                    b.ToTable((string)null);
 
-                    b.ToTable("Clients", (string)null);
+                    b.UseTpcMappingStrategy();
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.ClinicDto", b =>
@@ -290,29 +250,33 @@ namespace PetHelp.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<string>("Address")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Cnpj")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(14)
+                        .HasColumnType("nvarchar(14)");
+
+                    b.Property<double>("Latitude")
+                        .HasColumnType("float");
 
                     b.Property<string>("License")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<double>("Longitude")
+                        .HasColumnType("float");
 
                     b.Property<string>("Name")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId");
-
-                    b.ToTable("Clinics", (string)null);
+                    b.ToTable("Clinic");
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.EmployeeDto", b =>
@@ -331,7 +295,7 @@ namespace PetHelp.Migrations
                     b.HasIndex("UserId")
                         .IsUnique();
 
-                    b.ToTable("Employees", (string)null);
+                    b.ToTable("Employee");
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.Identity.IdentityBaseDto", b =>
@@ -421,13 +385,50 @@ namespace PetHelp.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.MessageDto", b =>
+            modelBuilder.Entity("PetHelp.Dtos.UserDto", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique();
+
+                    b.ToTable("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.AdoptionDetailDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
+
+                    b.Property<int>("AdoptionHeaderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AnimalId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observation")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasIndex("AdoptionHeaderId");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("AdoptionDetail");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.AdoptionHeaderDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
 
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
@@ -435,34 +436,128 @@ namespace PetHelp.Migrations
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Message")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
                     b.HasIndex("EmployeeId");
 
                     b.HasIndex("UserId");
 
-                    b.ToTable("Message", (string)null);
+                    b.ToTable("AdoptionHeader");
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.ScheduleDto", b =>
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
                 {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
 
                     b.Property<int>("AnimalId")
                         .HasColumnType("int");
 
-                    b.Property<int>("ClientId")
+                    b.Property<int>("ClinicId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("Duration")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(75)
+                        .HasColumnType("nvarchar(75)");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("ClinicId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Apointment");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentResultDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
+
+                    b.Property<int?>("AnimalDtoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ApointmentHeaderId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("ClinicDtoId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Observations")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("ServiceDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Type")
+                        .HasMaxLength(75)
+                        .HasColumnType("nvarchar(75)");
+
+                    b.HasIndex("AnimalDtoId");
+
+                    b.HasIndex("ApointmentHeaderId");
+
+                    b.HasIndex("ClinicDtoId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ApointmentResult");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.MedicationDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
+
+                    b.Property<bool>("Active")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("AnimalId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClinicId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
+
+                    b.Property<int>("Dose")
+                        .HasMaxLength(50)
+                        .HasColumnType("int");
+
+                    b.Property<string>("DoseUnitOfMeasurement")
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<TimeSpan?>("Duration")
+                        .HasColumnType("time");
+
+                    b.Property<TimeSpan?>("Frequency")
+                        .HasColumnType("time");
+
+                    b.Property<string>("Name")
+                        .HasMaxLength(75)
+                        .HasColumnType("nvarchar(75)");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("ClinicId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Medication");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.ScheduleDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
+
+                    b.Property<int>("AnimalId")
                         .HasColumnType("int");
 
                     b.Property<DateTime>("Date")
@@ -474,15 +569,61 @@ namespace PetHelp.Migrations
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
-                    b.HasKey("Id");
-
                     b.HasIndex("AnimalId");
-
-                    b.HasIndex("ClientId");
 
                     b.HasIndex("EmployeeId");
 
-                    b.ToTable("Schedules", (string)null);
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Schedule");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.VaccineDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
+
+                    b.Property<int>("AnimalId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ClinicId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("DateTaken")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("NextDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Type")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("ClinicId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Vaccine");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.WatchedDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
+
+                    b.Property<int>("AnimalId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("Favorite")
+                        .HasColumnType("bit");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Watched");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
@@ -536,93 +677,19 @@ namespace PetHelp.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.AdoptionDto", b =>
-                {
-                    b.HasOne("PetHelp.Dtos.ClientDto", "Client")
-                        .WithMany("Adoptions")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("PetHelp.Dtos.EmployeeDto", "Employee")
-                        .WithMany("Adoption")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Client");
-
-                    b.Navigation("Employee");
-                });
-
             modelBuilder.Entity("PetHelp.Dtos.AnimalDto", b =>
                 {
-                    b.HasOne("PetHelp.Dtos.AdoptionDto", "Adoption")
-                        .WithMany("Animals")
-                        .HasForeignKey("AdoptionId");
-
-                    b.HasOne("PetHelp.Dtos.ClientDto", "Client")
-                        .WithMany("Animals")
-                        .HasForeignKey("ClientId");
-
                     b.HasOne("PetHelp.Dtos.ClinicDto", "Clinic")
                         .WithMany("Animals")
                         .HasForeignKey("ClinicId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Adoption");
-
-                    b.Navigation("Client");
-
-                    b.Navigation("Clinic");
-                });
-
-            modelBuilder.Entity("PetHelp.Dtos.ClientAnimalDto", b =>
-                {
-                    b.HasOne("PetHelp.Dtos.AdoptionDto", "Adoption")
-                        .WithMany("ClientAnimals")
-                        .HasForeignKey("AdoptionId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
-                        .WithMany("ClientAnimals")
-                        .HasForeignKey("AnimalId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("PetHelp.Dtos.ClientDto", "Client")
-                        .WithMany("ClientAnimals")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("Adoption");
-
-                    b.Navigation("Animal");
-
-                    b.Navigation("Client");
-                });
-
-            modelBuilder.Entity("PetHelp.Dtos.ClientDto", b =>
-                {
-                    b.HasOne("PetHelp.Dtos.Identity.IdentityBaseDto", "User")
-                        .WithOne("Client")
-                        .HasForeignKey("PetHelp.Dtos.ClientDto", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.Navigation("User");
-                });
-
-            modelBuilder.Entity("PetHelp.Dtos.ClinicDto", b =>
-                {
-                    b.HasOne("PetHelp.Dtos.Identity.IdentityBaseDto", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("Animals")
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("Clinic");
 
                     b.Navigation("User");
                 });
@@ -632,29 +699,148 @@ namespace PetHelp.Migrations
                     b.HasOne("PetHelp.Dtos.Identity.IdentityBaseDto", "User")
                         .WithOne("Employee")
                         .HasForeignKey("PetHelp.Dtos.EmployeeDto", "UserId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.MessageDto", b =>
+            modelBuilder.Entity("PetHelp.Dtos.UserDto", b =>
                 {
-                    b.HasOne("PetHelp.Dtos.EmployeeDto", "Employee")
-                        .WithMany("Messages")
-                        .HasForeignKey("EmployeeId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                    b.HasOne("PetHelp.Dtos.Identity.IdentityBaseDto", "IdentityUser")
+                        .WithOne("User")
+                        .HasForeignKey("PetHelp.Dtos.UserDto", "UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PetHelp.Dtos.ClientDto", "Client")
-                        .WithMany("Messages")
+                    b.Navigation("IdentityUser");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.AdoptionDetailDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.AdoptionHeaderDto", "AdoptionHeader")
+                        .WithMany("AdoptionDetails")
+                        .HasForeignKey("AdoptionHeaderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
+                        .WithMany()
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("AdoptionsDetails")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("Client");
+                    b.Navigation("AdoptionHeader");
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.AdoptionHeaderDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.EmployeeDto", "Employee")
+                        .WithMany("Adoptions")
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("Adoptions")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
 
                     b.Navigation("Employee");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
+                        .WithMany()
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.ClinicDto", "Clinic")
+                        .WithMany()
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("Apointments")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("Clinic");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentResultDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.AnimalDto", null)
+                        .WithMany("Apointments")
+                        .HasForeignKey("AnimalDtoId");
+
+                    b.HasOne("PetHelp.Dtos.ApointmentHeaderDto", "ApointmentHeader")
+                        .WithMany("Results")
+                        .HasForeignKey("ApointmentHeaderId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.ClinicDto", null)
+                        .WithMany("Apointments")
+                        .HasForeignKey("ClinicDtoId");
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("Results")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("ApointmentHeader");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.MedicationDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
+                        .WithMany("Medications")
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.ClinicDto", "Clinic")
+                        .WithMany("Medications")
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("Medications")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("Clinic");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.ScheduleDto", b =>
@@ -662,74 +848,141 @@ namespace PetHelp.Migrations
                     b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
                         .WithMany("Schedules")
                         .HasForeignKey("AnimalId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
-
-                    b.HasOne("PetHelp.Dtos.ClientDto", "Client")
-                        .WithMany("Schedules")
-                        .HasForeignKey("ClientId")
-                        .OnDelete(DeleteBehavior.NoAction)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.HasOne("PetHelp.Dtos.EmployeeDto", "Employee")
                         .WithMany("Schedules")
                         .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("Schedules")
+                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
                     b.Navigation("Animal");
 
-                    b.Navigation("Client");
-
                     b.Navigation("Employee");
+
+                    b.Navigation("User");
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.AdoptionDto", b =>
+            modelBuilder.Entity("PetHelp.Dtos.VaccineDto", b =>
                 {
-                    b.Navigation("Animals");
+                    b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
+                        .WithMany("Vaccines")
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("ClientAnimals");
+                    b.HasOne("PetHelp.Dtos.ClinicDto", "Clinic")
+                        .WithMany("Vaccines")
+                        .HasForeignKey("ClinicId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("Vaccines")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("Clinic");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.WatchedDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
+                        .WithMany("WatchedList")
+                        .HasForeignKey("AnimalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
+                        .WithMany("WatchedList")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.AnimalDto", b =>
                 {
-                    b.Navigation("ClientAnimals");
+                    b.Navigation("Apointments");
+
+                    b.Navigation("Medications");
 
                     b.Navigation("Schedules");
-                });
 
-            modelBuilder.Entity("PetHelp.Dtos.ClientDto", b =>
-                {
-                    b.Navigation("Adoptions");
+                    b.Navigation("Vaccines");
 
-                    b.Navigation("Animals");
-
-                    b.Navigation("ClientAnimals");
-
-                    b.Navigation("Messages");
-
-                    b.Navigation("Schedules");
+                    b.Navigation("WatchedList");
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.ClinicDto", b =>
                 {
                     b.Navigation("Animals");
+
+                    b.Navigation("Apointments");
+
+                    b.Navigation("Medications");
+
+                    b.Navigation("Vaccines");
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.EmployeeDto", b =>
                 {
-                    b.Navigation("Adoption");
-
-                    b.Navigation("Messages");
+                    b.Navigation("Adoptions");
 
                     b.Navigation("Schedules");
                 });
 
             modelBuilder.Entity("PetHelp.Dtos.Identity.IdentityBaseDto", b =>
                 {
-                    b.Navigation("Client");
-
                     b.Navigation("Employee");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.UserDto", b =>
+                {
+                    b.Navigation("Adoptions");
+
+                    b.Navigation("AdoptionsDetails");
+
+                    b.Navigation("Animals");
+
+                    b.Navigation("Apointments");
+
+                    b.Navigation("Medications");
+
+                    b.Navigation("Results");
+
+                    b.Navigation("Schedules");
+
+                    b.Navigation("Vaccines");
+
+                    b.Navigation("WatchedList");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.AdoptionHeaderDto", b =>
+                {
+                    b.Navigation("AdoptionDetails");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
+                {
+                    b.Navigation("Results");
                 });
 #pragma warning restore 612, 618
         }

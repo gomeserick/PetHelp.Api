@@ -24,11 +24,11 @@ namespace PetHelp.Controllers
         public async Task<IActionResult> Get()
         {
             var user = await manager.GetUserAsync(User);
-            var claims = await manager.GetRolesAsync(user);
+            var claims = User.Claims.ToDictionary(k => k.Type, v => v.ValueType);
             user.Employee = await context.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
-            user.Client = await context.Clients.FirstOrDefaultAsync(e => e.UserId == user.Id);
+            user.User = await context.PetHelpUsers.FirstOrDefaultAsync(e => e.UserId == user.Id);
             var userResponse = mapper.Map<UserInfoResponse>(user);
-            userResponse.Roles = claims;
+            userResponse.Claims = claims;
             return Ok(userResponse);
         }
     }

@@ -8,13 +8,13 @@ using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    public class ClinicController(DatabaseContext dbContext, INotificatorService notificatorService) : ODataController
+    public class ClinicController(DatabaseContext dbContext, INotificatorService notificatorService) : Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
     {
-        [EnableQuery]
-        public IActionResult Get()
-        {
-            return Ok(dbContext.Animals);
-        }
+        //[EnableQuery]
+        //public IActionResult Get()
+        //{
+        //    return Ok(dbContext.Animals);
+        //}
 
         public async Task<IActionResult> Get(int key)
         {

@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using PetHelp.Dtos.Identity;
+using PetHelp.Middlewares;
 using PetHelp.Services.Database;
 using PetHelp.Services.Seeders.Interfaces;
 
@@ -14,6 +15,12 @@ namespace PetHelp.Extensions
             ConfigureSwaggerUI(app);
             ConfigureDatabase(app);
             UseAuthentication(app);
+            UseMiddlewares(app);
+        }
+
+        private static void UseMiddlewares(WebApplication app)
+        {
+            app.UseMiddleware<ContextMiddleware>();
         }
 
         private static void ConfigureCors(WebApplication app)

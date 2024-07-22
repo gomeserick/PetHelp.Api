@@ -8,7 +8,7 @@ using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    public class RolesController(DatabaseContext context, INotificatorService notificator): ODataController
+    public class RolesController(DatabaseContext context, INotificatorService notificator): Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
     {
         [EnableQuery]
         public ActionResult<IdentityRole<int>> Get()

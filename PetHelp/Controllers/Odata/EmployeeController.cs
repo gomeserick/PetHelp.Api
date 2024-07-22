@@ -37,8 +37,6 @@ namespace PetHelp.Controllers.Employee
 
             System.IO.File.WriteAllBytes(Path.Combine(path, user.Id + ".jpg"), photo);
 
-
-
             await userStore.UpdateAsync(user);
 
             return Ok();

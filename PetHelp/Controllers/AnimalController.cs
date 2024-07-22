@@ -10,14 +10,21 @@ using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    public class AnimalController(DatabaseContext dbContext, INotificatorService notificatorService) : ODataController
+    public class AnimalController(DatabaseContext dbContext, INotificatorService notificatorService) : Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
     {
 
-        [EnableQuery]
-        public IActionResult Get()
-        {
-            return Ok(dbContext.Animals);
-        }
+        //[EnableQuery]
+        //public IActionResult Get()
+        //{
+        //    return Ok(dbContext.Animals);
+        //}
+
+        //[EnableQuery]
+        //[HttpGet("Adoptions")]
+        //public IActionResult GetAdoptions()
+        //{
+        //    return Ok(dbContext.Adoptions);
+        //}
 
         public async Task<IActionResult> Get(int key)
         {
@@ -86,7 +93,7 @@ namespace PetHelp.Controllers
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            var clientAnimalExists = await dbContext.ClientAnimals.AnyAsync(e => e.AnimalId == key);
+            var clientAnimalExists = await dbContext.Watcheds.AnyAsync(e => e.AnimalId == key);
             if (!clientAnimalExists)
             {
                 notificatorService.Notify("ClientAnimal", "Não é possivel deletar um animal já adotado");
