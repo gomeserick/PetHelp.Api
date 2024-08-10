@@ -10,6 +10,7 @@
         string RG { get; set; }
         string Image { get; set; }
         bool NotificationEnabled { get; set; }
+        bool IsEmployee { get; set; }
         public IDictionary<string, string> Claims { get; set; }
     }
 }

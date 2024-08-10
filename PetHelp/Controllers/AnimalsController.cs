@@ -4,44 +4,27 @@ using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using PetHelp.Application.Contracts.Enums;
+using PetHelp.Application.Contracts.Requests;
 using PetHelp.Dtos;
+using PetHelp.Services.Context.Interfaces;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    public class AnimalController(DatabaseContext dbContext, INotificatorService notificatorService) : Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
+    [ApiController]
+    [Route("[controller]")]
+    public class AnimalController(
+        DatabaseContext dbContext, 
+        INotificatorService notificatorService,
+        IContext context) : ControllerBase
     {
 
-        //[EnableQuery]
-        //public IActionResult Get()
-        //{
-        //    return Ok(dbContext.Animals);
-        //}
-
-        //[EnableQuery]
-        //[HttpGet("Adoptions")]
-        //public IActionResult GetAdoptions()
-        //{
-        //    return Ok(dbContext.Adoptions);
-        //}
-
-        public async Task<IActionResult> Get(int key)
-        {
-            var result = await dbContext.Animals.Where(e => e.Id == key).ToListAsync();
-
-            if (result == null)
-            {
-                notificatorService.Notify("Animal", "Não foi possivel encontrar o animal");
-                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
-            }
-
-            return Ok(result);
-        }
 
         [Authorize(PetHelpRoles.Admin)]
         [Authorize(PetHelpRoles.Employee)]
-        public async Task<IActionResult> Post([FromBody] AnimalDto animal)
+        [HttpPost("Create")]
+        public async Task<IActionResult> CreateAnimal([FromBody] AnimalDto animal)
         {
             var AnimalExists = await dbContext.Animals.Where(e => e.Id == animal.ClinicId).AnyAsync();
             if (!AnimalExists)
@@ -59,10 +42,12 @@ namespace PetHelp.Controllers
 
             dbContext.Add(animal);
 
-            return Created(animal);
+            return Created(animal.Id.ToString(), animal);
         }
 
-        public async Task<IActionResult> Put(int key, [FromBody] AnimalDto animal)
+        [HttpPut("Update/{key}")]
+        [Authorize]
+        public async Task<IActionResult> UpdateAnimal(int key, [FromBody] AnimalRequest request)
         {
             var result = dbContext.Animals.FirstOrDefaultAsync(e => e.Id == key);
 
@@ -72,37 +57,57 @@ namespace PetHelp.Controllers
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            var ClinicsExists = await dbContext.Clinics.Where(e => e.Id == animal.ClinicId).AnyAsync();
+            var ClinicsExists = await dbContext.Clinics.Where(e => e.Id == request.ClinicId).AnyAsync();
             if (!ClinicsExists)
             {
                 notificatorService.Notify("Clinica", "Não foi possivel encontrar a clínica");
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            dbContext.Entry(result).CurrentValues.SetValues(animal);
+            dbContext.Entry(result).CurrentValues.SetValues(request);
 
-            return Created(animal);
+            return Ok(result);
         }
-        public async Task<IActionResult> Delete([FromQuery] int key)
+
+        [HttpPut("ReportDeath/{key}")]
+        [Authorize]
+        public async Task<IActionResult> ReportDeath(int key)
         {
-            var result = await dbContext.Animals.FirstOrDefaultAsync(e => e.Id == key);
+            var result = await dbContext.Animals.FirstOrDefaultAsync(e => e.Id == key && e.UserId == context.UserId);
 
             if (result == null)
             {
-                notificatorService.Notify("Clinica", "Não foi possivel encontrar a clínica");
+                notificatorService.Notify("Animal", "Não foi possivel encontrar o animal");
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
 
-            var clientAnimalExists = await dbContext.Watcheds.AnyAsync(e => e.AnimalId == key);
-            if (!clientAnimalExists)
+            if(result.Alive == false)
             {
-                notificatorService.Notify("ClientAnimal", "Não é possivel deletar um animal já adotado");
+                notificatorService.Notify("Animal", "O animal já faleceu");
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
+
+            result.Alive = false;
+
+            await dbContext.Watcheds.Where(e => e.AnimalId == key).ExecuteDeleteAsync();
+            await dbContext.Schedules
+                .Where(e => !e.Cancelled && e.Date > DateTime.Now && e.AnimalId == key)
+                .ExecuteUpdateAsync(s => 
+                    s.SetProperty(s => s.Cancelled, true)
+                     .SetProperty(s => s.CancellationReason, "O Animal Faleceu"));
 
             dbContext.Remove(result);
 
-            return Ok(result);
+            return NoContent();
+        }
+
+        [HttpPost("Vaccine")]
+        [Authorize]
+        public IActionResult Vaccine(VaccineDto vaccine)
+        {
+            var result = dbContext.Add(vaccine).Entity;
+
+            return Created(result.Id.ToString(), result);
         }
     }
 }

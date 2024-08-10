@@ -1,103 +1,102 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.OData.Query;
-using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
 using PetHelp.Application.Contracts.Enums;
+using PetHelp.Application.Contracts.Requests;
 using PetHelp.Dtos;
+using PetHelp.Services.Context.Interfaces;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
+using System.Linq;
+
 
 namespace PetHelp.Controllers
 {
-    public class AdoptionController(INotificatorService notificator, DatabaseContext dbContext): Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
+    [ApiController]
+    [Route("[controller]")]
+    public class AdoptionController(
+        INotificatorService notificator, 
+        DatabaseContext dbContext, 
+        IContext context,
+        IMapper mapper): ControllerBase
     {
-        //[EnableQuery]
-        //public IActionResult Get()
-        //{
-        //    return Ok(dbContext.Adoptions);
-        //}
-        //public async Task<IActionResult> Get(int key)
-        //{
-        //    var result = await dbContext.Adoptions.Where(e => e.Id == key).ToListAsync();
-
-        //    if(result == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return Ok(result);
-        //}
         [Authorize(PetHelpRoles.Employee)]
         [Authorize(PetHelpRoles.Admin)]
-        public async Task<ActionResult> Post([FromBody] AdoptionHeaderDto adoption)
+        [HttpPut("Confirm")]
+        public async Task<ActionResult> Post(int key)
         {
-            var clientExists = await dbContext.PetHelpUsers.Where(e => e.Id == adoption.UserId).AnyAsync();
-            if (!clientExists)
-            {
-                notificator.Notify("Cliente", "Não foi possivel encontrar o cliente da adoção");
-                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
-            }
-
-            var employeeExists = await  dbContext.Employees.Where(e => e.Id == adoption.EmployeeId).AnyAsync();
-            if (!employeeExists)
-            {
-                notificator.Notify("Funcionário", "Não foi possivel encontrar o funcionário da adoção");
-                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
-            }
-
-            dbContext.Add(adoption);
-
-            return Created(adoption);
-        }
-        public async Task<ActionResult> Put([FromQuery] int key, [FromBody] AdoptionHeaderDto adoption)
-        {
-            var result = dbContext.Adoptions.FirstOrDefaultAsync(e => e.Id == key);
-
-            if (result == null)
-            {
-                notificator.Notify("Funcionário", "Não foi possivel encontrar a adoção");
-                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
-            }
-
-            var clientExists = await dbContext.PetHelpUsers.Where(e => e.Id == adoption.UserId).AnyAsync();
-            if (!clientExists)
-            {
-                notificator.Notify("Cliente", "Não foi possivel encontrar o cliente da adoção");
-                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
-            }
-
-            var employeeExists = await dbContext.Employees.Where(e => e.Id == adoption.EmployeeId).AnyAsync();
-            if (!employeeExists)
-            {
-                notificator.Notify("Cliente", "Não foi possivel encontrar o funcionário da adoção");
-                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
-            }
-
-            dbContext.Entry(result).CurrentValues.SetValues(adoption);
-
-            return Created(adoption);
-        }
-        public async Task<ActionResult> Delete([FromQuery] int key)
-        {
-            var result = await dbContext.Adoptions
+            var adoption = await dbContext.Adoptions
                 .Include(e => e.AdoptionDetails)
-                .FirstOrDefaultAsync(e => e.Id == key);
-
-            if(result == null)
+                .ThenInclude(e => e.Animal)
+                .ThenInclude(e => e.Schedules.Where(e => !e.Cancelled && e.Date > DateTime.Now))
+                .Include(e => e.AdoptionDetails)
+                .ThenInclude(e => e.Animal)
+                .ThenInclude(e => e.WatchedList)
+                .FirstOrDefaultAsync(e => e.Id == key && e.Status == AdoptionStatus.Pending);
+            if (adoption == null)
             {
-                return NoContent();
-            }
-
-            if (result.AdoptionDetails.Any())
-            {
-                notificator.Notify("aNIMAL", "Não é possivel deletar uma adoção já realizada");
+                notificator.Notify("Adoption", "Adoção não encontrada, iniciada ou já finalizada");
                 return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
             }
 
-            dbContext.Remove(result);
+            adoption.Status = AdoptionStatus.Confirmed;
+            var userId = adoption.AdoptionDetails.Select(e => e.UserId).FirstOrDefault();
 
-            return Ok(result);
+            var animals = adoption.AdoptionDetails.Select(e => e.Animal).ToList();
+
+            await dbContext.Animals
+                .Intersect(animals)
+                .ExecuteUpdateAsync(e => e.SetProperty(e => e.UserId, userId));
+
+            await dbContext.Schedules
+                .Intersect(animals.SelectMany(e => e.Schedules))
+                .ExecuteUpdateAsync(e => 
+                e.SetProperty(e => e.Cancelled, true)
+                 .SetProperty(e => e.CancellationReason, "Animal Adotado")
+                );
+
+            await dbContext.Watcheds.Intersect(animals.SelectMany(e => e.WatchedList)).ExecuteDeleteAsync();
+
+            return Created();
+        }
+
+        [Authorize(PetHelpRoles.Employee)]
+        [Authorize(PetHelpRoles.Admin)]
+        [HttpPut("Create")]
+        public async Task<ActionResult> Post([FromBody] AdoptionCreationRequest adoptionHeader)
+        {
+            if (adoptionHeader == null)
+            {
+                notificator.Notify("Adoption", "Adoção não encontrada ou não iniciada");
+                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
+            }
+
+            var animalIds = adoptionHeader.AdoptionDetails.Select(e => e.AnimalId).ToList();
+
+            var animalsAvailable = await dbContext.AdoptionDetails
+                .Include(e => e.AdoptionHeader)
+                .Where(e => animalIds.Contains(e.AnimalId))
+                .AnyAsync(e => e.AdoptionHeader.Status != AdoptionStatus.Cancelled);
+
+            if (animalsAvailable) 
+            {
+                notificator.Notify("Adoption", "Um ou mais animais já estão em processo de adoção");
+                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
+            }
+
+            var adoption = mapper.Map<AdoptionHeaderDto>(adoptionHeader);
+            adoption.UserId = context.UserId;
+
+            adoption.AdoptionDetails = adoption.AdoptionDetails.Select(e =>
+            {
+                e.UserId = context.UserId;
+                return e;
+            }).AsEnumerable();
+
+            dbContext.Adoptions.Add(adoption);
+
+            return Created();
         }
     }
 }

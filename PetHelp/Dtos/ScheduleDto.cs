@@ -9,7 +9,9 @@ namespace PetHelp.Dtos
     public class ScheduleDto: PrivateDataDto
     {
         public DateTime Date { get; set; }
-        public int Duration { get; set; } // in minutes
+        public TimeSpan Duration { get; set; }
+        public bool Cancelled { get; set; }
+        public string CancellationReason { get; set; }
         [ForeignKey(nameof(Employee))]
         public int EmployeeId { get; set; }
         [ForeignKey(nameof(Animal))]

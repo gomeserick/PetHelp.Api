@@ -12,16 +12,16 @@ namespace PetHelp.Dtos
         [MaxLength(75)]
         public string Type { get; set; }
         public DateTime Date { get; set; }
-        public int Duration { get; set; }
+        public TimeSpan Duration { get; set; }
+        public bool Cancelled { get; set; }
+        public string CancellationReason { get; set; }
         [ForeignKey(nameof(Clinic))]
         public int ClinicId { get; set; }
-        [ForeignKey(nameof(Animal))]
-        public int AnimalId { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         [DeleteBehavior(DeleteBehavior.NoAction)]
         public ClinicDto Clinic { get; set; }
         [SwaggerSchema(ReadOnly = true)]
-        public AnimalDto Animal { get; set; }
+        public IEnumerable<ApointmentDetailDto> Details { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<ApointmentResultDto> Results { get; set; }
     }

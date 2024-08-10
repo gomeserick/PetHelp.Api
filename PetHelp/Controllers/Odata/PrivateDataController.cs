@@ -17,7 +17,7 @@ namespace PetHelp.Controllers.Odata
     {
 
         [EnableQuery]
-        [HttpGet("User/Animal/")]
+        [HttpGet("User/Animal")]
         public IActionResult GetUserAnimals()
         {
             return Ok(dbContext.Animals.Where(e => e.UserId == context.UserId));

@@ -37,7 +37,9 @@ namespace PetHelp.Dtos
         [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<ScheduleDto> Schedules { get; set; }
         [SwaggerSchema(ReadOnly = true)]
-        public IEnumerable<ApointmentResultDto> Apointments { get; set; }
+        public IEnumerable<ApointmentResultDto> ApointmentResults { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
+        public IEnumerable<ApointmentDetailDto> Apointments { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<VaccineDto> Vaccines { get; set; }
         [SwaggerSchema(ReadOnly = true)]

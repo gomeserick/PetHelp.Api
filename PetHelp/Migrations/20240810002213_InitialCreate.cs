@@ -15,6 +15,26 @@ namespace PetHelp.Migrations
                 name: "PrivateDataDtoSequence");
 
             migrationBuilder.CreateTable(
+                name: "Address",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Street = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Number = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Complement = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Neighborhood = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    City = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    State = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Country = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ZipCode = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Address", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoles",
                 columns: table => new
                 {
@@ -40,6 +60,7 @@ namespace PetHelp.Migrations
                     CPF = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Image = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    NotificationEnabled = table.Column<bool>(type: "bit", nullable: false),
                     UserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     NormalizedUserName = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
                     Email = table.Column<string>(type: "nvarchar(256)", maxLength: 256, nullable: true),
@@ -67,16 +88,21 @@ namespace PetHelp.Migrations
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
-                    Address = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Cnpj = table.Column<string>(type: "nvarchar(14)", maxLength: 14, nullable: true),
                     Latitude = table.Column<double>(type: "float", nullable: false),
                     Longitude = table.Column<double>(type: "float", nullable: false),
                     License = table.Column<string>(type: "nvarchar(40)", maxLength: 40, nullable: true),
-                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true)
+                    PhoneNumber = table.Column<string>(type: "nvarchar(20)", maxLength: 20, nullable: true),
+                    AddressId = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Clinic", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Clinic_Address_AddressId",
+                        column: x => x.AddressId,
+                        principalTable: "Address",
+                        principalColumn: "Id");
                 });
 
             migrationBuilder.CreateTable(
@@ -230,7 +256,8 @@ namespace PetHelp.Migrations
                     Id = table.Column<int>(type: "int", nullable: false, defaultValueSql: "NEXT VALUE FOR [PrivateDataDtoSequence]"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    EmployeeId = table.Column<int>(type: "int", nullable: false)
+                    EmployeeId = table.Column<int>(type: "int", nullable: false),
+                    Status = table.Column<int>(type: "int", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -284,6 +311,34 @@ namespace PetHelp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Apointment",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false, defaultValueSql: "NEXT VALUE FOR [PrivateDataDtoSequence]"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    Type = table.Column<string>(type: "nvarchar(75)", maxLength: 75, nullable: true),
+                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Duration = table.Column<TimeSpan>(type: "time", nullable: false),
+                    Cancelled = table.Column<bool>(type: "bit", nullable: false),
+                    CancellationReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    ClinicId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Apointment", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Apointment_Clinic_ClinicId",
+                        column: x => x.ClinicId,
+                        principalTable: "Clinic",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_Apointment_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AdoptionDetail",
                 columns: table => new
                 {
@@ -310,39 +365,6 @@ namespace PetHelp.Migrations
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
                         name: "FK_AdoptionDetail_User_UserId",
-                        column: x => x.UserId,
-                        principalTable: "User",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Apointment",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false, defaultValueSql: "NEXT VALUE FOR [PrivateDataDtoSequence]"),
-                    UserId = table.Column<int>(type: "int", nullable: false),
-                    Type = table.Column<string>(type: "nvarchar(75)", maxLength: 75, nullable: true),
-                    Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Duration = table.Column<int>(type: "int", nullable: false),
-                    ClinicId = table.Column<int>(type: "int", nullable: false),
-                    AnimalId = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Apointment", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Apointment_Animal_AnimalId",
-                        column: x => x.AnimalId,
-                        principalTable: "Animal",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_Apointment_Clinic_ClinicId",
-                        column: x => x.ClinicId,
-                        principalTable: "Clinic",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Apointment_User_UserId",
                         column: x => x.UserId,
                         principalTable: "User",
                         principalColumn: "Id");
@@ -393,7 +415,9 @@ namespace PetHelp.Migrations
                     Id = table.Column<int>(type: "int", nullable: false, defaultValueSql: "NEXT VALUE FOR [PrivateDataDtoSequence]"),
                     UserId = table.Column<int>(type: "int", nullable: false),
                     Date = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    Duration = table.Column<int>(type: "int", nullable: false),
+                    Duration = table.Column<TimeSpan>(type: "time", nullable: false),
+                    Cancelled = table.Column<bool>(type: "bit", nullable: false),
+                    CancellationReason = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     EmployeeId = table.Column<int>(type: "int", nullable: false),
                     AnimalId = table.Column<int>(type: "int", nullable: false)
                 },
@@ -479,6 +503,37 @@ namespace PetHelp.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ApointmentDetails",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false, defaultValueSql: "NEXT VALUE FOR [PrivateDataDtoSequence]"),
+                    UserId = table.Column<int>(type: "int", nullable: false),
+                    ApointmentHeaderId = table.Column<int>(type: "int", nullable: false),
+                    AnimalId = table.Column<int>(type: "int", nullable: false),
+                    ApointmentHeaderDtoId = table.Column<int>(type: "int", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ApointmentDetails", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_ApointmentDetails_Animal_AnimalId",
+                        column: x => x.AnimalId,
+                        principalTable: "Animal",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ApointmentDetails_Apointment_ApointmentHeaderDtoId",
+                        column: x => x.ApointmentHeaderDtoId,
+                        principalTable: "Apointment",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_ApointmentDetails_User_UserId",
+                        column: x => x.UserId,
+                        principalTable: "User",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateTable(
                 name: "ApointmentResult",
                 columns: table => new
                 {
@@ -553,11 +608,6 @@ namespace PetHelp.Migrations
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Apointment_AnimalId",
-                table: "Apointment",
-                column: "AnimalId");
-
-            migrationBuilder.CreateIndex(
                 name: "IX_Apointment_ClinicId",
                 table: "Apointment",
                 column: "ClinicId");
@@ -565,6 +615,21 @@ namespace PetHelp.Migrations
             migrationBuilder.CreateIndex(
                 name: "IX_Apointment_UserId",
                 table: "Apointment",
+                column: "UserId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApointmentDetails_AnimalId",
+                table: "ApointmentDetails",
+                column: "AnimalId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApointmentDetails_ApointmentHeaderDtoId",
+                table: "ApointmentDetails",
+                column: "ApointmentHeaderDtoId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ApointmentDetails_UserId",
+                table: "ApointmentDetails",
                 column: "UserId");
 
             migrationBuilder.CreateIndex(
@@ -632,6 +697,11 @@ namespace PetHelp.Migrations
                 column: "NormalizedUserName",
                 unique: true,
                 filter: "[NormalizedUserName] IS NOT NULL");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Clinic_AddressId",
+                table: "Clinic",
+                column: "AddressId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Employee_UserId",
@@ -708,6 +778,9 @@ namespace PetHelp.Migrations
                 name: "AdoptionDetail");
 
             migrationBuilder.DropTable(
+                name: "ApointmentDetails");
+
+            migrationBuilder.DropTable(
                 name: "ApointmentResult");
 
             migrationBuilder.DropTable(
@@ -747,16 +820,19 @@ namespace PetHelp.Migrations
                 name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "Employee");
+                name: "Animal");
 
             migrationBuilder.DropTable(
-                name: "Animal");
+                name: "Employee");
 
             migrationBuilder.DropTable(
                 name: "Clinic");
 
             migrationBuilder.DropTable(
                 name: "User");
+
+            migrationBuilder.DropTable(
+                name: "Address");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

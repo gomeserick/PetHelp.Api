@@ -1,4 +1,5 @@
-﻿using PetHelp.Dtos.Base;
+﻿using Microsoft.EntityFrameworkCore;
+using PetHelp.Dtos.Base;
 using PetHelp.Dtos.Identity;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel.DataAnnotations;
@@ -11,7 +12,6 @@ namespace PetHelp.Dtos
     {
         [MaxLength(40)]
         public string Name { get; set; }
-        public string Address { get; set; }
         [StringLength(14)]
         public string Cnpj { get; set; }
         public double Latitude { get; set; }
@@ -20,11 +20,19 @@ namespace PetHelp.Dtos
         public string License { get; set; }
         [MaxLength(20)]
         public string PhoneNumber { get; set; }
+        [ForeignKey(nameof(Address))]
+        public int AddressId { get; set; }
+        [DeleteBehavior(DeleteBehavior.NoAction)]
+        public AddressDto Address { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<AnimalDto> Animals { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<MedicationDto> Medications { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<VaccineDto> Vaccines { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<ApointmentHeaderDto> Apointments { get; set; }
+        [SwaggerSchema(ReadOnly = true)]
         public IEnumerable<ApointmentResultDto> ApointmentsResults { get; set; }
     }
 }

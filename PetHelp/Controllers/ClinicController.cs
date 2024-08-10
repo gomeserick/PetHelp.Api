@@ -1,32 +1,24 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.OData.Query;
 using Microsoft.AspNetCore.OData.Routing.Controllers;
 using Microsoft.EntityFrameworkCore;
+using PetHelp.Application.Contracts.Requests;
 using PetHelp.Dtos;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
 
 namespace PetHelp.Controllers
 {
-    public class ClinicController(DatabaseContext dbContext, INotificatorService notificatorService) : Microsoft.AspNetCore.OData.Routing.Controllers.ODataController
+    [ApiController]
+    [Route("[controller]")]
+    public class ClinicController(
+        DatabaseContext dbContext, 
+        INotificatorService notificatorService,
+        IMapper mapper
+        ) : ControllerBase
     {
-        //[EnableQuery]
-        //public IActionResult Get()
-        //{
-        //    return Ok(dbContext.Animals);
-        //}
-
-        public async Task<IActionResult> Get(int key)
-        {
-            var result = await dbContext.Clinics.Where(e => e.Id == key).ToListAsync();
-
-            if (result == null)
-            {
-                return NotFound();
-            }
-            return Ok(result);
-        }
-
+        [HttpPost("Create")]
         public async Task<IActionResult> Post([FromBody] ClinicDto clinic)
         {
             var ClinicsExists = await dbContext.Clinics.Where(e => e.Id == clinic.Id).AnyAsync();
@@ -38,9 +30,9 @@ namespace PetHelp.Controllers
 
             dbContext.Add(clinic);
 
-            return Created(clinic);
+            return Created(clinic.Id.ToString(), clinic);
         }
-
+        [HttpPut("Update/{key}")]
         public async Task<IActionResult> Put(int key, [FromBody] ClinicDto clinic)
         {
             var clinicExists = await dbContext.Clinics.AnyAsync(e => e.Id == key);
@@ -53,9 +45,10 @@ namespace PetHelp.Controllers
 
             dbContext.Entry(clinicExists).CurrentValues.SetValues(clinic);
 
-            return Created(clinic);
+            return Created(clinic.Id.ToString(), clinic);
         }
-        public async Task<IActionResult> Delete([FromQuery] int key)
+        [HttpDelete("Delete/{key}")]
+        public async Task<IActionResult> Delete(int key)
         {
             var result = await dbContext.Clinics
                 .Include(e => e.Animals)
@@ -75,7 +68,43 @@ namespace PetHelp.Controllers
 
             dbContext.Remove(result);
 
-            return Ok(result);
+            return NoContent();
+        }
+
+        [HttpPost("Apointment/Create")]
+        public async Task<IActionResult> CreateApointment([FromBody] ApointmentRequest request)
+        {
+            var result = await dbContext.Clinics
+                .AnyAsync(e => e.Id == request.ClinicId);
+
+            if (result)
+            {
+                notificatorService.Notify("Clinic", "Não foi possivel encontrar a clínica");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
+            }
+
+            if (result)
+            {
+                notificatorService.Notify("ClientAnimal", "Não é possivel deletar uma clínica com animais adotados");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
+            }
+
+            var animalApoitments = await dbContext.Apointments
+                .Include(e => e.Details.Where(e => request.Animals.Contains(e.AnimalId)))
+                .Where(e => e.Details.Any())
+                .AnyAsync(e => e.Date >= request.Date && e.Date <= request.Date + request.Duration);
+
+            if (animalApoitments)
+            {
+                notificatorService.Notify("Apointment", "Não é possivel agendar um consulta para um animal que já tem um consulta marcado");
+                return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
+            }
+
+            var apointment = mapper.Map<ApointmentHeaderDto>(request);
+
+            dbContext.Add(apointment);
+
+            return Created(apointment.Id.ToString(), result);
         }
     }
 }

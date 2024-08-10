@@ -10,7 +10,7 @@ using System.Security.Claims;
 namespace PetHelp.Controllers.SysAdm
 {
     [ApiController]
-    [Route("api/[controller]")]
+    [Route("[controller]")]
     [Authorize(PetHelpRoles.Admin)]
     public class SysAdmController(
         IUserClaimStore<IdentityBaseDto> claimStore,

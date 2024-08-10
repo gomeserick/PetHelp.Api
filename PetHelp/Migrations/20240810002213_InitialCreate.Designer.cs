@@ -12,7 +12,7 @@ using PetHelp.Services.Database;
 namespace PetHelp.Migrations
 {
     [DbContext(typeof(DatabaseContext))]
-    [Migration("20240721152712_InitialCreate")]
+    [Migration("20240810002213_InitialCreate")]
     partial class InitialCreate
     {
         /// <inheritdoc />
@@ -164,6 +164,43 @@ namespace PetHelp.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("PetHelp.Dtos.AddressDto", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("City")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Complement")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Country")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Neighborhood")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Number")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("State")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Street")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ZipCode")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Address");
+                });
+
             modelBuilder.Entity("PetHelp.Dtos.AnimalDto", b =>
                 {
                     b.Property<int>("Id")
@@ -249,8 +286,8 @@ namespace PetHelp.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Address")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("AddressId")
+                        .HasColumnType("int");
 
                     b.Property<string>("Cnpj")
                         .HasMaxLength(14)
@@ -275,6 +312,8 @@ namespace PetHelp.Migrations
                         .HasColumnType("nvarchar(20)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("AddressId");
 
                     b.ToTable("Clinic");
                 });
@@ -345,6 +384,9 @@ namespace PetHelp.Migrations
                     b.Property<string>("NormalizedUserName")
                         .HasMaxLength(256)
                         .HasColumnType("nvarchar(256)");
+
+                    b.Property<bool>("NotificationEnabled")
+                        .HasColumnType("bit");
 
                     b.Property<string>("PasswordHash")
                         .HasColumnType("nvarchar(max)");
@@ -436,6 +478,9 @@ namespace PetHelp.Migrations
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
 
+                    b.Property<int>("Status")
+                        .HasColumnType("int");
+
                     b.HasIndex("EmployeeId");
 
                     b.HasIndex("UserId");
@@ -443,12 +488,37 @@ namespace PetHelp.Migrations
                     b.ToTable("AdoptionHeader");
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentDetailDto", b =>
                 {
                     b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
 
                     b.Property<int>("AnimalId")
                         .HasColumnType("int");
+
+                    b.Property<int?>("ApointmentHeaderDtoId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("ApointmentHeaderId")
+                        .HasColumnType("int");
+
+                    b.HasIndex("AnimalId");
+
+                    b.HasIndex("ApointmentHeaderDtoId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ApointmentDetails");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
+                {
+                    b.HasBaseType("PetHelp.Dtos.Base.PrivateDataDto");
+
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Cancelled")
+                        .HasColumnType("bit");
 
                     b.Property<int>("ClinicId")
                         .HasColumnType("int");
@@ -456,14 +526,12 @@ namespace PetHelp.Migrations
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Duration")
-                        .HasColumnType("int");
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("time");
 
                     b.Property<string>("Type")
                         .HasMaxLength(75)
                         .HasColumnType("nvarchar(75)");
-
-                    b.HasIndex("AnimalId");
 
                     b.HasIndex("ClinicId");
 
@@ -560,11 +628,17 @@ namespace PetHelp.Migrations
                     b.Property<int>("AnimalId")
                         .HasColumnType("int");
 
+                    b.Property<string>("CancellationReason")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("Cancelled")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime>("Date")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("Duration")
-                        .HasColumnType("int");
+                    b.Property<TimeSpan>("Duration")
+                        .HasColumnType("time");
 
                     b.Property<int>("EmployeeId")
                         .HasColumnType("int");
@@ -694,6 +768,17 @@ namespace PetHelp.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("PetHelp.Dtos.ClinicDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.AddressDto", "Address")
+                        .WithMany()
+                        .HasForeignKey("AddressId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Address");
+                });
+
             modelBuilder.Entity("PetHelp.Dtos.EmployeeDto", b =>
                 {
                     b.HasOne("PetHelp.Dtos.Identity.IdentityBaseDto", "User")
@@ -762,16 +847,33 @@ namespace PetHelp.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentDetailDto", b =>
                 {
                     b.HasOne("PetHelp.Dtos.AnimalDto", "Animal")
-                        .WithMany()
+                        .WithMany("Apointments")
                         .HasForeignKey("AnimalId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("PetHelp.Dtos.ClinicDto", "Clinic")
+                    b.HasOne("PetHelp.Dtos.ApointmentHeaderDto", null)
+                        .WithMany("Details")
+                        .HasForeignKey("ApointmentHeaderDtoId");
+
+                    b.HasOne("PetHelp.Dtos.UserDto", "User")
                         .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Animal");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
+                {
+                    b.HasOne("PetHelp.Dtos.ClinicDto", "Clinic")
+                        .WithMany("Apointments")
                         .HasForeignKey("ClinicId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
@@ -782,8 +884,6 @@ namespace PetHelp.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("Animal");
-
                     b.Navigation("Clinic");
 
                     b.Navigation("User");
@@ -792,7 +892,7 @@ namespace PetHelp.Migrations
             modelBuilder.Entity("PetHelp.Dtos.ApointmentResultDto", b =>
                 {
                     b.HasOne("PetHelp.Dtos.AnimalDto", null)
-                        .WithMany("Apointments")
+                        .WithMany("ApointmentResults")
                         .HasForeignKey("AnimalDtoId");
 
                     b.HasOne("PetHelp.Dtos.ApointmentHeaderDto", "ApointmentHeader")
@@ -802,7 +902,7 @@ namespace PetHelp.Migrations
                         .IsRequired();
 
                     b.HasOne("PetHelp.Dtos.ClinicDto", null)
-                        .WithMany("Apointments")
+                        .WithMany("ApointmentsResults")
                         .HasForeignKey("ClinicDtoId");
 
                     b.HasOne("PetHelp.Dtos.UserDto", "User")
@@ -918,6 +1018,8 @@ namespace PetHelp.Migrations
 
             modelBuilder.Entity("PetHelp.Dtos.AnimalDto", b =>
                 {
+                    b.Navigation("ApointmentResults");
+
                     b.Navigation("Apointments");
 
                     b.Navigation("Medications");
@@ -934,6 +1036,8 @@ namespace PetHelp.Migrations
                     b.Navigation("Animals");
 
                     b.Navigation("Apointments");
+
+                    b.Navigation("ApointmentsResults");
 
                     b.Navigation("Medications");
 
@@ -982,6 +1086,8 @@ namespace PetHelp.Migrations
 
             modelBuilder.Entity("PetHelp.Dtos.ApointmentHeaderDto", b =>
                 {
+                    b.Navigation("Details");
+
                     b.Navigation("Results");
                 });
 #pragma warning restore 612, 618

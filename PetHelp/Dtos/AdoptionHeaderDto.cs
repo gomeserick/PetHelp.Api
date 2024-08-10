@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using PetHelp.Application.Contracts.Enums;
 using PetHelp.Dtos.Base;
 using Swashbuckle.AspNetCore.Annotations;
 using System.ComponentModel;
@@ -12,6 +13,7 @@ namespace PetHelp.Dtos
         public DateTime Date { get; set; }
         [ForeignKey(nameof(Employee))]
         public int EmployeeId { get; set; }
+        public AdoptionStatus Status { get; set; }
         [SwaggerSchema(ReadOnly = true)]
         public EmployeeDto Employee { get; set; }
         [SwaggerSchema(ReadOnly = true)]

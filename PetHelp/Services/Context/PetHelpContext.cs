@@ -13,6 +13,7 @@ namespace PetHelp.Services.Context
         public string RG { get; set; }
         public string Image { get; set; }
         public bool NotificationEnabled { get; set; }
-        public IDictionary<string,string> Claims { get; set; }
+        public bool IsEmployee { get; set; }
+        public IDictionary<string, string> Claims { get; set; }
     }
 }
