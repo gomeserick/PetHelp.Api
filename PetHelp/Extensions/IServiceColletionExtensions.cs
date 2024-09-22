@@ -180,7 +180,16 @@ namespace PetHelp.Extensions
 
             services.AddDbContext<DatabaseContext>(options =>
             {
-                options.UseSqlServer(config.GetConnectionString("DefaultConnection"));
+                var host = Environment.GetEnvironmentVariable("DB_HOST");
+                var name = Environment.GetEnvironmentVariable("DB_NAME");
+                var pass = Environment.GetEnvironmentVariable("DB_SA_PASSWORD");
+
+                var connectionString = $"Data Source={host};Initial Catalog={name};User ID=sa;Password={pass};Persist Security Info=False;Encrypt=False";
+
+                var a = options.UseSqlServer(connectionString, e =>
+                {
+                    //e.EnableRetryOnFailure();
+                });
             });
 
 

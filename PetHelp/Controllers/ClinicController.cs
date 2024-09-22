@@ -77,6 +77,10 @@ namespace PetHelp.Controllers
             var result = await dbContext.Clinics
                 .AnyAsync(e => e.Id == request.ClinicId);
 
+
+            var a = await dbContext.Clinics
+                .FirstOrDefaultAsync(e => e.Id == request.ClinicId);
+
             if (result)
             {
                 notificatorService.Notify("Clinic", "Não foi possivel encontrar a clínica");

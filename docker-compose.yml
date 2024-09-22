@@ -1,0 +1,30 @@
+version: '3.4'
+
+networks:
+  pethelp:
+    driver: bridge
+
+services:
+  customerdb:
+    container_name: customer-db
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      - SA_PASSWORD=Password1234!
+      - ACCEPT_EULA=Y
+    networks:
+      - pethelp
+    ports:
+      - 8001:1433
+  pethelp:
+    image: ${DOCKER_REGISTRY-}pethelp
+    build:
+      context: .
+      dockerfile: PetHelp/Dockerfile
+    networks:
+      - pethelp
+    ports: 
+      - 8002:80
+    environment:
+      - DB_HOST=customerdb
+      - DB_NAME=customer
+      - DB_SA_PASSWORD=Password1234!

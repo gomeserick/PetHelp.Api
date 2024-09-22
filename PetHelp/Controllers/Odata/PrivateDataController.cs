@@ -13,7 +13,11 @@ using PetHelp.Services.Database;
 namespace PetHelp.Controllers.Odata
 {
     [Authorize("EndUser")]
-    public class PrivateDataController(DatabaseContext dbContext, IContext context): ODataController
+    public class PrivateDataController(
+        DatabaseContext dbContext, 
+        UserManager<IdentityBaseDto> manager,
+        IContext context,
+        IMapper mapper) : ODataController
     {
 
         [EnableQuery]
@@ -91,6 +95,18 @@ namespace PetHelp.Controllers.Odata
         public IActionResult GetWatcheds()
         {
             return Ok(dbContext.Watcheds);
+        }
+
+        [HttpGet("Info")]
+        public async Task<IActionResult> Get()
+        {
+            var user = await manager.GetUserAsync(User);
+            var claims = User.Claims.ToDictionary(k => k.Type, v => v.ValueType);
+            user.Employee = await dbContext.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
+            user.User = await dbContext.PetHelpUsers.FirstOrDefaultAsync(e => e.UserId == user.Id);
+            var userResponse = mapper.Map<UserInfoResponse>(user);
+            userResponse.Claims = claims;
+            return Ok(userResponse);
         }
     }
 }
