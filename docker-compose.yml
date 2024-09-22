@@ -14,7 +14,7 @@ services:
     networks:
       - pethelp
     ports:
-      - 8001:1433
+      - 8003:1433
   pethelp:
     image: ${DOCKER_REGISTRY-}pethelp
     build:
