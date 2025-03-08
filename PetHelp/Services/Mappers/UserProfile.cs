@@ -15,6 +15,9 @@ namespace PetHelp.Services.Mappers
 
             CreateMap<IContext, UserInfoResponse>()
                 .ForMember(dest => dest.Id, opt => opt.MapFrom(e => e.UserId));
+
+            CreateMap<IdentityBaseDto, UserInfoResponse>()
+                .ForMember(dest => dest.Id, opt => opt.MapFrom(e => e.Id));
         }
     }
 }

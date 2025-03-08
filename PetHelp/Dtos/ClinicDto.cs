@@ -14,11 +14,7 @@ namespace PetHelp.Dtos
         public string Name { get; set; }
         [StringLength(14)]
         public string Cnpj { get; set; }
-        public double Latitude { get; set; }
-        public double Longitude { get; set; }
         [MaxLength(40)]
-        public string License { get; set; }
-        [MaxLength(20)]
         public string PhoneNumber { get; set; }
         [ForeignKey(nameof(Address))]
         public int AddressId { get; set; }

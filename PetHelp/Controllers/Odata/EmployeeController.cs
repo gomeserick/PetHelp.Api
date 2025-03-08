@@ -9,21 +9,20 @@ using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
 using System.Reflection.Metadata;
 
-namespace PetHelp.Controllers.Employee
+namespace PetHelp.Controllers.Odata
 {
     [ApiController]
     [Route("api/[controller]")]
-    [Authorize(PetHelpRoles.Employee)]
+    //[Authorize(PetHelpRoles.Employee)]
     public class EmployeeController(
-        DatabaseContext context, 
-        UserManager<IdentityBaseDto> userStore, 
-        INotificatorService notificator): ControllerBase
+        UserManager<IdentityBaseDto> userStore,
+        INotificatorService notificator) : ControllerBase
     {
         [HttpPost("Photo")]
         public async Task<IActionResult> UpdatePhoto([FromBody] IFormFile image)
         {
             var user = await userStore.GetUserAsync(User);
-            if(image.ContentType != "image/jpeg" && image.ContentType != "image/png")
+            if (image.ContentType != "image/jpeg" && image.ContentType != "image/png")
             {
                 notificator.Notify("Photo", "Formato de imagem inválido");
                 return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));

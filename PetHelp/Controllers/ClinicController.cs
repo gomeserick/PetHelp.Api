@@ -24,10 +24,9 @@ namespace PetHelp.Controllers
             var ClinicsExists = await dbContext.Clinics.Where(e => e.Id == clinic.Id).AnyAsync();
             if (ClinicsExists)
             {
-                notificatorService.Notify("Clinica", "Não foi possivel encontrar a clínica");
+                notificatorService.Notify("Clinica", "A Clínica já Existe");
                 return ValidationProblem(new ValidationProblemDetails(notificatorService.GetNotifications()));
             }
-
             dbContext.Add(clinic);
 
             return Created(clinic.Id.ToString(), clinic);

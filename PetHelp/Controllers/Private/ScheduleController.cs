@@ -11,7 +11,7 @@ namespace PetHelp.Controllers.Private
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize("EndUser")]
+    //[Authorize("EndUser")]
     public class ScheduleController(DatabaseContext dbcontext, INotificatorService notificator): ControllerBase
     {
         [HttpPost("Create")]

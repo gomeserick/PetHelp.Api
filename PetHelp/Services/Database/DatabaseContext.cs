@@ -28,6 +28,7 @@ namespace PetHelp.Services.Database
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
+            optionsBuilder.EnableSensitiveDataLogging(true);
             optionsBuilder.LogTo(e =>
             {
                 Console.ForegroundColor = ConsoleColor.Green;

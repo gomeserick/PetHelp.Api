@@ -21,9 +21,10 @@ namespace PetHelp.Controllers.Odata
 
         [EnableQuery]
         [HttpGet("odata/Animal({key})")]
+        [HttpGet("odata/Animal/{key}")]
         public async Task<IActionResult> GetAnimal(int key)
         {
-            var result = await dbContext.Animals.Where(e => e.Id == key && e.UserId != null).ToListAsync();
+            var result = await dbContext.Animals.FirstOrDefaultAsync(e => e.Id == key && e.UserId == null);
 
             if (result == null)
             {
@@ -39,6 +40,22 @@ namespace PetHelp.Controllers.Odata
         public IActionResult GetClinics()
         {
             return Ok(dbContext.Clinics);
+        }
+
+        [EnableQuery]
+        [HttpGet("odata/Clinic({key})")]
+        [HttpGet("odata/Clinic/{key}")]
+        public async Task<IActionResult> GetClinic(int key)
+        {
+            var result = await dbContext.Clinics.FirstOrDefaultAsync(e => e.Id == key);
+
+            if (result == null)
+            {
+                notificator.Notify("Clínica", "Não foi possivel encontrar a clínica");
+                return ValidationProblem(new ValidationProblemDetails(notificator.GetNotifications()));
+            }
+
+            return Ok(result);
         }
     }
 }

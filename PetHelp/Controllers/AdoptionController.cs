@@ -21,8 +21,8 @@ namespace PetHelp.Controllers
         IContext context,
         IMapper mapper): ControllerBase
     {
-        [Authorize(PetHelpRoles.Employee)]
-        [Authorize(PetHelpRoles.Admin)]
+        //[Authorize(PetHelpRoles.Employee)]
+        //[Authorize(PetHelpRoles.Admin)]
         [HttpPut("Confirm")]
         public async Task<ActionResult> Post(int key)
         {
@@ -61,8 +61,8 @@ namespace PetHelp.Controllers
             return Created();
         }
 
-        [Authorize(PetHelpRoles.Employee)]
-        [Authorize(PetHelpRoles.Admin)]
+        //[Authorize(PetHelpRoles.Employee)]
+        //[Authorize(PetHelpRoles.Admin)]
         [HttpPut("Create")]
         public async Task<ActionResult> Post([FromBody] AdoptionCreationRequest adoptionHeader)
         {

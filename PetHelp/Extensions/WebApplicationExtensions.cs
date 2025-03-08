@@ -52,12 +52,11 @@ namespace PetHelp.Extensions
 
         private static async void ConfigureDatabase(IApplicationBuilder app)
         {
-            using (var scope = app.ApplicationServices.CreateScope())
-            {
-                await scope.ServiceProvider.GetRequiredService<DatabaseContext>().Database.MigrateAsync();
-                await scope.ServiceProvider.GetKeyedService<ISeeder>("RoleSeeding").Seed();
-                await scope.ServiceProvider.GetKeyedService<ISeeder>("UserSeeding").Seed();
-            }
+            using var scope = app.ApplicationServices.CreateScope();
+            await scope.ServiceProvider.GetRequiredService<DatabaseContext>().Database.MigrateAsync();
+            await scope.ServiceProvider.GetKeyedService<ISeeder>("RoleSeeding").Seed();
+            await scope.ServiceProvider.GetKeyedService<ISeeder>("UserSeeding").Seed();
+            await scope.ServiceProvider.GetKeyedService<ISeeder>("ClaimSeeding").Seed();
         }
     }
 }

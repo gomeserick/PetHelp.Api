@@ -290,23 +290,13 @@ namespace PetHelp.Migrations
                         .HasMaxLength(14)
                         .HasColumnType("nvarchar(14)");
 
-                    b.Property<double>("Latitude")
-                        .HasColumnType("float");
-
-                    b.Property<string>("License")
-                        .HasMaxLength(40)
-                        .HasColumnType("nvarchar(40)");
-
-                    b.Property<double>("Longitude")
-                        .HasColumnType("float");
-
                     b.Property<string>("Name")
                         .HasMaxLength(40)
                         .HasColumnType("nvarchar(40)");
 
                     b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.HasKey("Id");
 
@@ -318,10 +308,7 @@ namespace PetHelp.Migrations
             modelBuilder.Entity("PetHelp.Dtos.EmployeeDto", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -397,6 +384,9 @@ namespace PetHelp.Migrations
                     b.Property<string>("RG")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<bool>("RegistrationFlag")
+                        .HasColumnType("bit");
+
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("nvarchar(max)");
 
@@ -427,10 +417,7 @@ namespace PetHelp.Migrations
             modelBuilder.Entity("PetHelp.Dtos.UserDto", b =>
                 {
                     b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("UserId")
                         .HasColumnType("int");
@@ -686,9 +673,6 @@ namespace PetHelp.Migrations
 
                     b.Property<DateTime>("CreationDate")
                         .HasColumnType("datetime2");
-
-                    b.Property<bool>("Favorite")
-                        .HasColumnType("bit");
 
                     b.HasIndex("AnimalId");
 

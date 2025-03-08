@@ -12,10 +12,11 @@ using PetHelp.Services.Database;
 
 namespace PetHelp.Controllers.Odata
 {
-    [Authorize("EndUser")]
+    [Authorize]
     public class PrivateDataController(
         DatabaseContext dbContext, 
-        UserManager<IdentityBaseDto> manager,
+        UserManager<IdentityBaseDto> userManager,
+        RoleManager<IdentityRole<int>> roleManager,
         IContext context,
         IMapper mapper) : ODataController
     {
@@ -97,15 +98,21 @@ namespace PetHelp.Controllers.Odata
             return Ok(dbContext.Watcheds);
         }
 
-        [HttpGet("Info")]
+        [HttpGet("User/Info")]
         public async Task<IActionResult> Get()
         {
-            var user = await manager.GetUserAsync(User);
-            var claims = User.Claims.ToDictionary(k => k.Type, v => v.ValueType);
+            var user = await userManager.GetUserAsync(User);
+            var claims = (await userManager.GetClaimsAsync(user)).ToList();
+            var roles = await userManager.GetRolesAsync(user);
+            foreach (var role in roles)
+            {
+                var roleClaims = await roleManager.GetClaimsAsync(await roleManager.FindByNameAsync(role));
+                claims.AddRange(roleClaims);
+            }
             user.Employee = await dbContext.Employees.FirstOrDefaultAsync(e => e.UserId == user.Id);
             user.User = await dbContext.PetHelpUsers.FirstOrDefaultAsync(e => e.UserId == user.Id);
             var userResponse = mapper.Map<UserInfoResponse>(user);
-            userResponse.Claims = claims;
+            userResponse.Claims = claims.ToDictionary(k => k.Type, v => v.Value);
             return Ok(userResponse);
         }
     }

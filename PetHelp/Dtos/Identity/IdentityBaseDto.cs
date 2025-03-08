@@ -11,6 +11,7 @@ namespace PetHelp.Dtos.Identity
         public string Address { get; set; }
         public string Image { get; set; }
         public bool NotificationEnabled { get; set; }
+        public bool RegistrationFlag { get; set; } = false;
         [SwaggerSchema(ReadOnly = true)]
         public EmployeeDto Employee { get; set; }
         [SwaggerSchema(ReadOnly = true)]

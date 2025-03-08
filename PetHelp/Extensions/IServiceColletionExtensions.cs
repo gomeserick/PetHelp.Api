@@ -1,13 +1,12 @@
-﻿using Microsoft.AspNetCore.HttpLogging;
+﻿using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.HttpLogging;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.AspNetCore.OData;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
 using Microsoft.OData.ModelBuilder;
 using Microsoft.OpenApi.Models;
 using PetHelp.Application.Contracts.Enums;
+using PetHelp.Application.Security;
 using PetHelp.Dtos;
 using PetHelp.Dtos.Identity;
 using PetHelp.Filters;
@@ -17,7 +16,8 @@ using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
 using PetHelp.Services.Seeders;
 using PetHelp.Services.Seeders.Interfaces;
-using System.Runtime.Intrinsics.X86;
+using System.Data;
+using System.Security.Claims;
 
 namespace PetHelp.Extensions
 {
@@ -25,51 +25,136 @@ namespace PetHelp.Extensions
     {
         public static void ConfigureServices(this IServiceCollection services, ConfigurationManager config)
         {
-            ConfigureDbContext(services, config);
+            ConfigureDbContext(services);
             ConfigureSwagger(services);
             ConfigureOdata(services);
             ConfigureMapper(services);
             ConfigureServices(services);
             ConfigureAuthentication(services);
             ConfigureSeeders(services);
+            ConfigureAppContext(services, config);
         }
 
         private static void ConfigureSeeders(IServiceCollection services)
         {
             services.AddKeyedScoped<ISeeder, UserSeeder>("UserSeeding");
-            services.AddKeyedScoped<ISeeder, RoleSeedingService>("RoleSeeding");
+            services.AddKeyedScoped<ISeeder, RoleSeeder>("RoleSeeding");
+            services.AddKeyedScoped<ISeeder, ClaimSeeder>("ClaimSeeding");
+        }
+
+        private static void ConfigureAppContext(IServiceCollection services, ConfigurationManager config)
+        {
+            var singleton = new ApplicationContext()
+            {
+                Files = new() {
+                    ImagePath = config.GetValue<string>("File:Images")
+                }
+            };
+
+            services.AddSingleton(singleton);
         }
 
         private static void ConfigureAuthentication(IServiceCollection services)
         {
-            services.AddAuthorization();
 
             services.AddAuthentication()
-                .AddBearerToken(IdentityConstants.BearerScheme);
+                .AddBearerToken(IdentityConstants.BearerScheme)
+                .AddCookie(options =>
+                {
+                    options.Events = new CookieAuthenticationEvents
+                    {
+                        OnRedirectToAccessDenied = context =>
+                        {
+                            context.Response.StatusCode = StatusCodes.Status403Forbidden;
+                            return Task.CompletedTask;
+                        },
+                        OnRedirectToLogin = context =>
+                        {
+                            context.Response.StatusCode = StatusCodes.Status401Unauthorized;
+                            return Task.CompletedTask;
+                        }
+                    };
+                });
+
+            services.AddAuthorization();
 
             services.AddAuthorizationBuilder()
                 .AddPolicy("Full", p =>
                 {
-                    p.RequireAuthenticatedUser();
                     p.RequireRole(PetHelpRoles.Employee);
-                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
                 })
                 .AddPolicy("Default", p =>
                 {
                     p.RequireAuthenticatedUser();
-                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
                 })
                 .AddPolicy("EndUser", p =>
                 {
                     p.RequireAuthenticatedUser();
-                    p.RequireRole(PetHelpRoles.Client);
-                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+                    p.RequireRole(PetHelpRoles.User);
                 })
-                .AddDefaultPolicy("Sysadm", p =>
+                .AddPolicy("Sysadm", p =>
                 {
                     p.RequireAuthenticatedUser();
-                    p.RequireRole(PetHelpRoles.Admin);
-                    p.AddAuthenticationSchemes(IdentityConstants.BearerScheme);
+                    p.RequireRole(PetHelpRoles.SysAdm);
+                })
+                .AddPolicy("admin", p =>
+                {
+                    p.RequireRole(PetHelpRoles.SysAdm);
+                })
+                .AddPolicy("CreateAnimal", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireClaim(PetHelpClaims.CreateAnimal);
+                })
+                .AddPolicy("UpdateAnimal", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireClaim(PetHelpClaims.UpdateAnimal);
+                })
+                .AddPolicy("CreateVaccine", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireClaim(PetHelpClaims.CreateVaccine);
+                })
+                .AddPolicy("UpdateVaccine", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireClaim(PetHelpClaims.UpdateVaccine);
+                })
+                .AddPolicy("CreateMedication", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireClaim(PetHelpClaims.CreateMedication);
+                })
+                .AddPolicy("UpdateMedication", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireClaim(PetHelpClaims.UpdateMedication);
+                })
+                .AddPolicy("CreateClinic", p =>
+                {
+                    p.RequireAuthenticatedUser();
+                    p.RequireClaim(PetHelpClaims.CreateClinic);
+                })
+                .AddPolicy("UpdateClinic", p =>
+                {
+                    p.RequireClaim(PetHelpClaims.UpdateClinic);
+                })
+                .AddPolicy("ConfirmAdoption", p =>
+                {
+                    p.RequireClaim(PetHelpClaims.ConfirmAdoption);
+                })
+                .AddPolicy("CreateAdoption", p =>
+                {
+                    p.RequireClaim(PetHelpClaims.CreateAdoption);
+                })
+                .AddPolicy("AddToWatchList", p =>
+                {
+                    p.RequireClaim(PetHelpClaims.AddToWatchList);
+                })
+                .AddPolicy("RemoveFromWatchList", p =>
+                {
+                    p.RequireClaim(PetHelpClaims.RemoveFromWatchList);
                 });
         }
 
@@ -77,6 +162,7 @@ namespace PetHelp.Extensions
         {
             services.AddScoped<IContext, PetHelpContext>();
             services.AddScoped<INotificatorService, NotificatorService>();
+            services.AddSingleton<NotificatorService>();
         }
 
         private static void ConfigureMapper(IServiceCollection builder)
@@ -171,7 +257,7 @@ namespace PetHelp.Extensions
             });
         }
 
-        private static void ConfigureDbContext(IServiceCollection services, ConfigurationManager config)
+        private static void ConfigureDbContext(IServiceCollection services)
         {
             IConfigurationRoot configuration = new ConfigurationBuilder()
             .SetBasePath(AppDomain.CurrentDomain.BaseDirectory)
@@ -201,6 +287,7 @@ namespace PetHelp.Extensions
                 options.Password.RequiredLength = 8;
                 options.Password.RequireLowercase = false; // true;
                 options.Password.RequiredUniqueChars = 1;
+
 
                 options.User.RequireUniqueEmail = true;
                 options.User.AllowedUserNameCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+";

@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using PetHelp.Application.Contracts.Enums;
+using PetHelp.Application.Security;
 using PetHelp.Dtos.Identity;
 using PetHelp.Services.Database;
 using PetHelp.Services.Notificator;
@@ -11,7 +12,7 @@ namespace PetHelp.Controllers.SysAdm
 {
     [ApiController]
     [Route("[controller]")]
-    [Authorize(PetHelpRoles.Admin)]
+    [Authorize(PetHelpRoles.SysAdm)]
     public class SysAdmController(
         IUserClaimStore<IdentityBaseDto> claimStore,
         UserManager<IdentityBaseDto> userManager,
@@ -40,7 +41,7 @@ namespace PetHelp.Controllers.SysAdm
         }
 
         [HttpPut("Employee/Reset")]
-        public async Task<IActionResult> ResetEmployeePassword([FromQuery] int userId, [FromBody] IEnumerable<string> claimList)
+        public async Task<IActionResult> ResetEmployeePassword([FromQuery] int userId)
         {
             var user = await claimStore.FindByIdAsync(userId.ToString(), CancellationToken.None);
             if (user == null)
@@ -65,7 +66,7 @@ namespace PetHelp.Controllers.SysAdm
             }
 
             await userManager.AddToRoleAsync(user, PetHelpRoles.Employee);
-            await userManager.RemoveFromRoleAsync(user, PetHelpRoles.Client);
+            await userManager.RemoveFromRoleAsync(user, PetHelpRoles.User);
 
             return Ok();
         }

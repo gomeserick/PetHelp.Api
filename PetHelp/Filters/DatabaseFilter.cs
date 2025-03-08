@@ -10,12 +10,9 @@ namespace PetHelp.Filters
     {
         public async Task OnResultExecutedAsync(ResultExecutedContext context)
         {
-            
         }
 
-#pragma warning disable CS1998
         public async Task OnResultExecutionAsync(ResultExecutingContext context, ResultExecutionDelegate next)
-#pragma warning restore CS1998
         {
             if (notificator.HasNotifications())
             {

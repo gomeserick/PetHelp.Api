@@ -2,6 +2,7 @@
 using PetHelp.Dtos.Base;
 using PetHelp.Dtos.Identity;
 using Swashbuckle.AspNetCore.Annotations;
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 
 namespace PetHelp.Dtos
@@ -9,6 +10,9 @@ namespace PetHelp.Dtos
     [Table("User")]
     public class UserDto : BaseDto
     {
+        [Key]
+        [DatabaseGenerated(DatabaseGeneratedOption.None)]
+        public new int Id { get; set; }
         [ForeignKey(nameof(IdentityUser))]
         public int UserId { get; set; }
         public IdentityBaseDto IdentityUser { get; set; }

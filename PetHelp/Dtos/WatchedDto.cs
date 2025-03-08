@@ -7,7 +7,6 @@ namespace PetHelp.Dtos
     [Table("Watched")]
     public class WatchedDto: PrivateDataDto
     {
-        public bool Favorite { get; set; }
         public DateTime CreationDate { get; set; }
         [ForeignKey(nameof(Animal))]
         public int AnimalId { get; set; }
